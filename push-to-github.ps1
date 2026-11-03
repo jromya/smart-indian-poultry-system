@@ -1,5 +1,5 @@
 # Smart Indian Poultry - One-Click GitHub Repo Creation & Push Script
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 Set-Location (Split-Path -Parent $MyInvocation.MyCommand.Path)
 
 $gh = "C:\Program Files\GitHub CLI\gh.exe"
