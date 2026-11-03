@@ -7,8 +7,21 @@ Write-Host "=================================================================" -
 Write-Host "   Smart Indian Poultry Farm Management System (Spring Boot 3)   " -ForegroundColor Green
 Write-Host "=================================================================" -ForegroundColor Cyan
 
-# 1. Check MongoDB on port 27017
-Write-Host "`n[1/3] Checking MongoDB on localhost:27017..." -ForegroundColor Yellow
+# Load local .env (gitignored) if present (e.g., MongoDB Atlas MONGODB_URI)
+$envFile = Join-Path $ProjectDir ".env"
+if (Test-Path $envFile) {
+    Get-Content $envFile | ForEach-Object {
+        if ($_ -match "^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)$") {
+            [System.Environment]::SetEnvironmentVariable($Matches[1], $Matches[2].Trim(), "Process")
+        }
+    }
+}
+
+# 1. Check MongoDB (Cloud MONGODB_URI or localhost:27017)
+if ($env:MONGODB_URI) {
+    Write-Host "`n[1/3] Using Cloud MongoDB Atlas URI from MONGODB_URI (.env)!" -ForegroundColor Green
+} else {
+    Write-Host "`n[1/3] Checking MongoDB on localhost:27017..." -ForegroundColor Yellow
 $mongoRunning = $false
 try {
     $tcp = New-Object System.Net.Sockets.TcpClient("127.0.0.1", 27017)
@@ -35,6 +48,7 @@ if ($mongoRunning) {
     } else {
         Write-Host "  -> Please start MongoDB service ('net start MongoDB' in Admin CMD)." -ForegroundColor Yellow
     }
+}
 }
 
 # 2. Check Java
