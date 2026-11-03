@@ -21,3 +21,6 @@ Thumbs.db
 *.log
 .env
 .env.*
+node_modules/
+package.json
+package-lock.json
