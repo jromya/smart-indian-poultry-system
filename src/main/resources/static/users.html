@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff & Users - Smart Indian Poultry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div id="appNavbarMount"></div>
+
+    <main class="container py-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <div>
+                <h2 class="fw-bold text-success mb-1">👥 <span data-i18n="nav_users">Staff & Users</span></h2>
+                <p class="text-muted mb-0">Manage roles, farm assignments, and staff access permissions.</p>
+            </div>
+            <button class="btn-agri" onclick="openUserModal()">
+                ➕ <span data-i18n="btn_add_user">Add Staff / User</span>
+            </button>
+        </div>
+
+        <div class="row g-3" id="usersGrid"></div>
+    </main>
+
+    <!-- Create / Edit User Modal -->
+    <div class="modal fade" id="userModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content rounded-4">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold">👥 Add / Update Staff Account</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="userForm">
+                        <input type="hidden" id="editUserId">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Full Name *</label>
+                                <input type="text" id="fullName" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Role *</label>
+                                <select id="role" class="form-select" required></select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Username *</label>
+                                <input type="text" id="username" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">10-Digit Mobile *</label>
+                                <input type="tel" id="phone" class="form-control" maxlength="10" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Password <small class="text-muted">(Leave blank when editing to keep unchanged)</small></label>
+                                <input type="password" id="password" class="form-control" minlength="6">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Preferred Language</label>
+                                <select id="preferredLanguage" class="form-select"></select>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Assign Farms (Hold Ctrl/Tap to select multiple)</label>
+                                <select id="assignedFarmIds" class="form-select" multiple style="min-height: 110px;"></select>
+                            </div>
+                        </div>
+                        <div class="mt-4 d-flex gap-2 justify-content-end">
+                            <button type="button" class="btn-agri-outline" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn-agri">Save Account</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/i18n.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let usersCache = [];
+        let farmsMap = {};
+        let userModal = null;
+
+        async function loadUsers() {
+            const res = await PoultryApp.apiFetch("/api/users");
+            usersCache = res.data || [];
+            const grid = document.getElementById("usersGrid");
+            grid.innerHTML = usersCache.map(u => {
+                const farmBadges = (u.assignedFarmIds || []).map(fid =>
+                    `<span class="badge bg-success bg-opacity-10 text-success border border-success me-1">${PoultryApp.escapeHtml(farmsMap[fid] || fid)}</span>`
+                ).join("") || `<span class="text-muted small">Global / Retail Scope</span>`;
+
+                return `
+                <div class="col-md-6 col-lg-4">
+                    <div class="agri-card p-4 h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="badge bg-success">${PoultryApp.escapeHtml(u.roleDisplayName)}</span>
+                                <span class="badge ${u.active ? 'bg-info text-dark' : 'bg-danger'}">${u.active ? 'Active' : 'Disabled'}</span>
+                            </div>
+                            <h5 class="fw-bold mb-1">${PoultryApp.escapeHtml(u.fullName)}</h5>
+                            <div class="small text-muted mb-2">@${PoultryApp.escapeHtml(u.username)} • 📞 ${PoultryApp.escapeHtml(u.phone)}</div>
+                            <div class="small mb-2">🌐 Language: <strong>${POULTRY_I18N.languageNames[u.preferredLanguage] || u.preferredLanguage}</strong></div>
+                            <div class="mb-3">${farmBadges}</div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn-agri-outline btn-sm flex-grow-1" onclick="editUser('${u.id}')">✏️ Edit</button>
+                            <button class="btn btn-sm ${u.active ? 'btn-outline-danger' : 'btn-outline-success'}"
+                                    onclick="toggleUser('${u.id}', ${!u.active})">
+                                ${u.active ? 'Disable' : 'Activate'}
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+            }).join("");
+        }
+
+        function openUserModal() {
+            document.getElementById("editUserId").value = "";
+            document.getElementById("userForm").reset();
+            document.getElementById("username").readOnly = false;
+            userModal.show();
+        }
+
+        function editUser(id) {
+            const u = usersCache.find(x => x.id === id);
+            if (!u) return;
+            document.getElementById("editUserId").value = u.id;
+            document.getElementById("fullName").value = u.fullName;
+            document.getElementById("role").value = u.role;
+            document.getElementById("username").value = u.username;
+            document.getElementById("username").readOnly = true;
+            document.getElementById("phone").value = u.phone;
+            document.getElementById("password").value = "";
+            document.getElementById("preferredLanguage").value = u.preferredLanguage || "en";
+            const sel = document.getElementById("assignedFarmIds");
+            Array.from(sel.options).forEach(opt => {
+                opt.selected = (u.assignedFarmIds || []).includes(opt.value);
+            });
+            userModal.show();
+        }
+
+        async function toggleUser(id, active) {
+            try {
+                const res = await PoultryApp.apiFetch(`/api/users/${id}/status?active=${active}`, { method: "PATCH" });
+                PoultryApp.showToast(res.message, "success");
+                await loadUsers();
+            } catch (err) {
+                PoultryApp.showToast(err.message, "danger");
+            }
+        }
+
+        (async function init() {
+            const actor = await PoultryApp.requireAuth(["SUPER_ADMIN", "FARM_ADMIN"]);
+            if (!actor) return;
+            PoultryApp.renderProtectedShell("users");
+            userModal = new bootstrap.Modal(document.getElementById("userModal"));
+            document.getElementById("preferredLanguage").innerHTML = PoultryApp.buildLanguageOptionsHtml();
+
+            const roleSel = document.getElementById("role");
+            if (actor.role === "SUPER_ADMIN") {
+                roleSel.innerHTML = `
+                    <option value="FARM_ADMIN">Farm Admin</option>
+                    <option value="FARM_MANAGER">Farm Manager</option>
+                    <option value="FARMER">Farmer</option>
+                    <option value="RETAILER">Retailer</option>
+                    <option value="CHICKEN_SHOP_OWNER">Chicken Shop Owner</option>
+                    <option value="SUPER_ADMIN">Super Admin</option>`;
+            } else {
+                roleSel.innerHTML = `
+                    <option value="FARM_MANAGER">Farm Manager</option>
+                    <option value="FARMER">Farmer</option>`;
+            }
+
+            const farmsRes = await PoultryApp.apiFetch("/api/farms");
+            const farmSel = document.getElementById("assignedFarmIds");
+            (farmsRes.data || []).forEach(f => {
+                farmsMap[f.id] = f.farmName;
+                farmSel.insertAdjacentHTML("beforeend", `<option value="${f.id}">${PoultryApp.escapeHtml(f.farmName)} (${f.farmCode})</option>`);
+            });
+
+            await loadUsers();
+
+            document.getElementById("userForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const editId = document.getElementById("editUserId").value;
+                const selectedFarms = Array.from(document.getElementById("assignedFarmIds").selectedOptions).map(o => o.value);
+                const payload = {
+                    fullName: document.getElementById("fullName").value,
+                    role: document.getElementById("role").value,
+                    username: document.getElementById("username").value,
+                    phone: document.getElementById("phone").value,
+                    password: document.getElementById("password").value || null,
+                    preferredLanguage: document.getElementById("preferredLanguage").value,
+                    assignedFarmIds: selectedFarms
+                };
+                try {
+                    const res = await PoultryApp.apiFetch(editId ? `/api/users/${editId}` : "/api/users", {
+                        method: editId ? "PUT" : "POST",
+                        body: JSON.stringify(payload)
+                    });
+                    userModal.hide();
+                    PoultryApp.showToast(res.message, "success");
+                    await loadUsers();
+                } catch (err) {
+                    PoultryApp.showToast(err.message, "danger");
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

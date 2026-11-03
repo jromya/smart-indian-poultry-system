@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farms - Smart Indian Poultry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div id="appNavbarMount"></div>
+
+    <main class="container py-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <div>
+                <h2 class="fw-bold text-success mb-1">🏡 <span data-i18n="nav_farms">My Farms</span></h2>
+                <p class="text-muted mb-0">Farm-isolated view: You only see farms assigned to your account.</p>
+            </div>
+            <div class="d-flex gap-2" id="farmAdminControls">
+                <button class="btn-agri d-none" id="btnOpenFarmModal" onclick="openCreateFarmModal()">
+                    ➕ <span data-i18n="btn_add_farm">Add New Farm</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="row g-4" id="farmsGrid"></div>
+    </main>
+
+    <!-- Create / Edit Farm Modal -->
+    <div class="modal fade" id="farmModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content rounded-4">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold" id="farmModalTitle">🏡 Add / Update Farm</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div id="farmFormDraftBanner" class="draft-banner mb-3 d-none">
+                        💾 <span data-i18n="draft_restored">Saved offline draft restored automatically.</span>
+                    </div>
+                    <form id="farmForm">
+                        <input type="hidden" id="editFarmId">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Farm Code *</label>
+                                <input type="text" id="farmCode" name="farmCode" class="form-control" placeholder="FARM-MH-003" required>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Farm Name *</label>
+                                <div class="input-group">
+                                    <input type="text" id="farmName" name="farmName" class="form-control" placeholder="e.g. Krushi Desi Poultry Farm" required>
+                                    <button type="button" class="btn voice-mic-btn" onclick="PoultryApp.startVoiceInput(this, 'farmName')">🎤</button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Owner Name *</label>
+                                <div class="input-group">
+                                    <input type="text" id="ownerName" name="ownerName" class="form-control" required>
+                                    <button type="button" class="btn voice-mic-btn" onclick="PoultryApp.startVoiceInput(this, 'ownerName')">🎤</button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">10-Digit Contact Mobile *</label>
+                                <input type="tel" id="contactPhone" name="contactPhone" class="form-control" maxlength="10" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Farm Category *</label>
+                                <select id="farmCategory" name="farmCategory" class="form-select" required>
+                                    <option value="MIXED">Mixed (Broiler + Layer + Desi)</option>
+                                    <option value="BROILER">Commercial Broiler Farm</option>
+                                    <option value="LAYER">Commercial Egg Layer Farm</option>
+                                    <option value="INDIGENOUS">Indigenous / Backyard Breeder Farm</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Total Bird Capacity *</label>
+                                <input type="number" id="totalBirdCapacity" name="totalBirdCapacity" class="form-control" min="10" value="5000" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">State *</label>
+                                <select id="state" name="state" class="form-select" required>
+                                    <option value="Maharashtra">Maharashtra</option>
+                                    <option value="Madhya Pradesh">Madhya Pradesh</option>
+                                    <option value="Gujarat">Gujarat</option>
+                                    <option value="Punjab">Punjab</option>
+                                    <option value="Telangana">Telangana</option>
+                                    <option value="Andhra Pradesh">Andhra Pradesh</option>
+                                    <option value="Karnataka">Karnataka</option>
+                                    <option value="Tamil Nadu">Tamil Nadu</option>
+                                    <option value="Kerala">Kerala</option>
+                                    <option value="West Bengal">West Bengal</option>
+                                    <option value="Odisha">Odisha</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">District *</label>
+                                <input type="text" id="district" name="district" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Village / City *</label>
+                                <input type="text" id="villageOrCity" name="villageOrCity" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Water Source</label>
+                                <select id="waterSource" name="waterSource" class="form-select">
+                                    <option value="BOREWELL">Borewell</option>
+                                    <option value="WELL">Open Well</option>
+                                    <option value="MUNICIPAL">Municipal Tap</option>
+                                    <option value="TANKER">Water Tanker</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Power Backup</label>
+                                <select id="electricityBackup" name="electricityBackup" class="form-select">
+                                    <option value="SOLAR">Solar Power</option>
+                                    <option value="DIESEL_GENSET">Diesel Generator</option>
+                                    <option value="INVERTER">Battery Inverter</option>
+                                    <option value="NONE">None</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Total Area (Sq. Ft.)</label>
+                                <input type="number" id="totalAreaSqFt" name="totalAreaSqFt" class="form-control" value="10000">
+                            </div>
+                        </div>
+                        <div class="mt-4 d-flex gap-2 justify-content-end">
+                            <button type="button" class="btn-agri-outline" data-bs-dismiss="modal" data-i18n="btn_cancel">Cancel</button>
+                            <button type="submit" class="btn-agri" data-i18n="btn_save">Save Details</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/i18n.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let farmsCache = [];
+        let farmModalInstance = null;
+        let canEditFarms = false;
+
+        async function loadFarms() {
+            const res = await PoultryApp.apiFetch("/api/farms");
+            farmsCache = res.data || [];
+            const grid = document.getElementById("farmsGrid");
+            if (farmsCache.length === 0) {
+                grid.innerHTML = `<div class="col-12"><div class="agri-card p-5 text-center text-muted">No farms assigned yet. Tap "Add New Farm" to create your first farm!</div></div>`;
+                return;
+            }
+            grid.innerHTML = farmsCache.map(f => `
+                <div class="col-md-6">
+                    <div class="agri-card p-4 h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge bg-success px-3 py-2 rounded-pill">${PoultryApp.escapeHtml(f.farmCode)}</span>
+                                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">${PoultryApp.escapeHtml(f.farmCategory)}</span>
+                            </div>
+                            <h4 class="fw-bold text-success mb-1">${PoultryApp.escapeHtml(f.farmName)}</h4>
+                            <p class="text-muted mb-3">📍 ${PoultryApp.escapeHtml(f.villageOrCity)}, ${PoultryApp.escapeHtml(f.district)}, ${PoultryApp.escapeHtml(f.state)}</p>
+                            <div class="row g-2 bg-light p-3 rounded-3 mb-3">
+                                <div class="col-6"><strong>👨‍🌾 Owner:</strong> ${PoultryApp.escapeHtml(f.ownerName)}</div>
+                                <div class="col-6"><strong>📞 Mobile:</strong> ${PoultryApp.escapeHtml(f.contactPhone)}</div>
+                                <div class="col-6"><strong>🐣 Capacity:</strong> ${Number(f.totalBirdCapacity).toLocaleString("en-IN")} birds</div>
+                                <div class="col-6"><strong>💧/⚡ Utility:</strong> ${PoultryApp.escapeHtml(f.waterSource)} / ${PoultryApp.escapeHtml(f.electricityBackup)}</div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a href="/poultry-houses.html?farmId=${f.id}" class="btn-agri-outline btn-sm text-decoration-none">
+                                🏗️ View Poultry Sheds
+                            </a>
+                            ${canEditFarms ? `<button class="btn-agri btn-sm" onclick="openEditFarmModal('${f.id}')">✏️ Edit Farm</button>` : ""}
+                        </div>
+                    </div>
+                </div>
+            `).join("");
+        }
+
+        function openCreateFarmModal() {
+            document.getElementById("editFarmId").value = "";
+            document.getElementById("farmForm").reset();
+            farmModalInstance.show();
+        }
+
+        function openEditFarmModal(id) {
+            const f = farmsCache.find(x => x.id === id);
+            if (!f) return;
+            document.getElementById("editFarmId").value = f.id;
+            document.getElementById("farmCode").value = f.farmCode;
+            document.getElementById("farmName").value = f.farmName;
+            document.getElementById("ownerName").value = f.ownerName;
+            document.getElementById("contactPhone").value = f.contactPhone;
+            document.getElementById("farmCategory").value = f.farmCategory;
+            document.getElementById("totalBirdCapacity").value = f.totalBirdCapacity;
+            document.getElementById("state").value = f.state;
+            document.getElementById("district").value = f.district;
+            document.getElementById("villageOrCity").value = f.villageOrCity;
+            document.getElementById("waterSource").value = f.waterSource || "BOREWELL";
+            document.getElementById("electricityBackup").value = f.electricityBackup || "SOLAR";
+            document.getElementById("totalAreaSqFt").value = f.totalAreaSqFt || 10000;
+            farmModalInstance.show();
+        }
+
+        (async function init() {
+            const user = await PoultryApp.requireAuth(["SUPER_ADMIN", "FARM_ADMIN", "FARM_MANAGER", "FARMER"]);
+            if (!user) return;
+            PoultryApp.renderProtectedShell("farms");
+            farmModalInstance = new bootstrap.Modal(document.getElementById("farmModal"));
+            canEditFarms = ["SUPER_ADMIN", "FARM_ADMIN"].includes(user.role);
+            if (canEditFarms) {
+                document.getElementById("btnOpenFarmModal").classList.remove("d-none");
+            }
+            PoultryApp.bindOfflineDraft("farmForm", "draft_create_farm");
+            await loadFarms();
+
+            document.getElementById("farmForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const editId = document.getElementById("editFarmId").value;
+                const payload = {
+                    farmCode: document.getElementById("farmCode").value,
+                    farmName: document.getElementById("farmName").value,
+                    ownerName: document.getElementById("ownerName").value,
+                    contactPhone: document.getElementById("contactPhone").value,
+                    farmCategory: document.getElementById("farmCategory").value,
+                    totalBirdCapacity: Number(document.getElementById("totalBirdCapacity").value),
+                    state: document.getElementById("state").value,
+                    district: document.getElementById("district").value,
+                    villageOrCity: document.getElementById("villageOrCity").value,
+                    waterSource: document.getElementById("waterSource").value,
+                    electricityBackup: document.getElementById("electricityBackup").value,
+                    totalAreaSqFt: Number(document.getElementById("totalAreaSqFt").value || 0)
+                };
+                try {
+                    const url = editId ? `/api/farms/${editId}` : "/api/farms";
+                    const method = editId ? "PUT" : "POST";
+                    const res = await PoultryApp.apiFetch(url, { method, body: JSON.stringify(payload) });
+                    PoultryApp.clearOfflineDraft("farmForm", "draft_create_farm");
+                    farmModalInstance.hide();
+                    PoultryApp.showToast(res.message, "success");
+                    await loadFarms();
+                } catch (err) {
+                    PoultryApp.showToast(err.message, "danger");
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+target/
+.git/
+.tools/
+.mongodb-data/
+.idea/
+.vscode/
+*.log
+.env

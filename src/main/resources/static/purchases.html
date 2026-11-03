@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Invoices - Smart Indian Poultry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div id="appNavbarMount"></div>
+
+    <main class="container py-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <div>
+                <h2 class="fw-bold text-success mb-1">🧾 <span data-i18n="nav_purchases">Purchase Invoices</span></h2>
+                <p class="text-muted mb-0">Record Feed, Medicine, Vaccine & Equipment purchase bills — automatically adds stock & updates supplier credit balance.</p>
+            </div>
+            <a href="/inventory.html" class="btn-agri-outline text-decoration-none">📦 View Live Godown Stock</a>
+        </div>
+
+        <div class="row g-4">
+            <!-- Record New Purchase Invoice Form -->
+            <div class="col-lg-5">
+                <div class="agri-card p-4">
+                    <h5 class="fw-bold text-success mb-3">🧾 Enter Supplier Purchase Bill</h5>
+                    <div id="purchaseFormDraftBanner" class="alert alert-info py-2 small d-none" data-i18n="draft_restored">
+                        Saved offline draft restored automatically.
+                    </div>
+
+                    <form id="purchaseForm">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Select Farm *</label>
+                            <select class="form-select form-select-lg" name="farmId" id="purFarm" required onchange="onFarmChanged()"></select>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-7">
+                                <label class="form-label fw-bold">Invoice Number *</label>
+                                <input type="text" class="form-control" name="invoiceNumber" id="purInvoice" placeholder="INV-2026-205" required>
+                            </div>
+                            <div class="col-5">
+                                <label class="form-label fw-bold">Bill Date *</label>
+                                <input type="date" class="form-control" name="purchaseDate" id="purDate" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Supplier *</label>
+                            <select class="form-select" name="supplierId" id="purSupplier" required></select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Inventory SKU to Replenish *</label>
+                            <select class="form-select" name="inventoryItemId" id="purItem" required onchange="prefillItemRate()"></select>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-4">
+                                <label class="form-label fw-bold">Quantity *</label>
+                                <input type="number" step="0.1" min="0.1" class="form-control" name="quantityPurchased" id="purQty" required oninput="calcInvoicePreview()">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label fw-bold">Rate / Unit (₹) *</label>
+                                <input type="number" step="0.01" min="0" class="form-control" name="purchaseRatePerUnit" id="purRate" required oninput="calcInvoicePreview()">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label fw-bold">Transport (₹)</label>
+                                <input type="number" step="1" min="0" class="form-control" name="transportAndOtherCharges" id="purTransport" value="0" oninput="calcInvoicePreview()">
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-3 bg-light border mb-3">
+                            <div class="d-flex justify-content-between fw-bold mb-2">
+                                <span>Total Invoice Amount:</span>
+                                <span class="text-success fs-5" id="previewTotalInr">₹0</span>
+                            </div>
+                            <label class="form-label fw-bold small mb-1">Amount Paid Now (₹) — Leave lower for Supplier Credit</label>
+                            <input type="number" step="1" min="0" class="form-control" name="amountPaid" id="purPaid" value="0" oninput="calcBalancePreview()">
+                            <div class="small text-danger fw-semibold mt-1" id="previewBalanceInr">Balance Payable: ₹0</div>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-bold">Batch / Lot No.</label>
+                                <input type="text" class="form-control" name="batchLotNumber" id="purLot" placeholder="LOT-992">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold">Expiry Date</label>
+                                <input type="date" class="form-control" name="expiryDate" id="purExpiry">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-agri w-100 py-3 fs-5">
+                            ✅ Save Invoice & Add Stock
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Purchase Invoice History -->
+            <div class="col-lg-7">
+                <div class="agri-card p-4">
+                    <h5 class="fw-bold text-success mb-3">📜 Purchase Invoice History</h5>
+                    <div id="purchaseHistoryList" class="d-grid gap-3"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/i18n.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let farms = [];
+        let suppliers = [];
+        let items = [];
+
+        (async function init() {
+            const user = await PoultryApp.requireAuth(["SUPER_ADMIN", "FARM_ADMIN", "FARM_MANAGER"]);
+            if (!user) return;
+            PoultryApp.renderProtectedShell("purchases");
+            document.getElementById("purDate").value = new Date().toISOString().split("T")[0];
+
+            await loadAll();
+            PoultryApp.bindOfflineDraft("purchaseForm", "draft_purchase_inv_v1");
+
+            document.getElementById("purchaseForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                try {
+                    const payload = {
+                        farmId: document.getElementById("purFarm").value,
+                        invoiceNumber: document.getElementById("purInvoice").value,
+                        purchaseDate: document.getElementById("purDate").value,
+                        supplierId: document.getElementById("purSupplier").value,
+                        inventoryItemId: document.getElementById("purItem").value,
+                        quantityPurchased: parseFloat(document.getElementById("purQty").value),
+                        purchaseRatePerUnit: parseFloat(document.getElementById("purRate").value),
+                        transportAndOtherCharges: parseFloat(document.getElementById("purTransport").value || "0"),
+                        amountPaid: parseFloat(document.getElementById("purPaid").value || "0"),
+                        batchLotNumber: document.getElementById("purLot").value,
+                        expiryDate: document.getElementById("purExpiry").value || null
+                    };
+                    const res = await PoultryApp.apiFetch("/api/purchases", { method: "POST", body: JSON.stringify(payload) });
+                    PoultryApp.showToast(res.message || "Purchase recorded!", "success");
+                    PoultryApp.clearOfflineDraft("purchaseForm", "draft_purchase_inv_v1");
+                    document.getElementById("purInvoice").value = "";
+                    document.getElementById("purQty").value = "";
+                    await loadAll();
+                } catch (err) {
+                    PoultryApp.showToast(err.message, "danger");
+                }
+            });
+        })();
+
+        async function loadAll() {
+            const [fRes, sRes, iRes, pRes] = await Promise.all([
+                PoultryApp.apiFetch("/api/farms"),
+                PoultryApp.apiFetch("/api/suppliers"),
+                PoultryApp.apiFetch("/api/inventory"),
+                PoultryApp.apiFetch("/api/purchases")
+            ]);
+            farms = fRes.data || [];
+            suppliers = sRes.data || [];
+            items = iRes.data || [];
+
+            document.getElementById("purFarm").innerHTML = farms.map(f => `<option value="${f.id}">${PoultryApp.escapeHtml(f.farmName)}</option>`).join("");
+            onFarmChanged();
+            renderPurchases(pRes.data || []);
+        }
+
+        function onFarmChanged() {
+            const farmId = document.getElementById("purFarm").value;
+            const fSups = suppliers.filter(s => s.farmId === farmId);
+            const fItems = items.filter(i => i.farmId === farmId);
+
+            document.getElementById("purSupplier").innerHTML = fSups.map(s => `<option value="${s.id}">${PoultryApp.escapeHtml(s.supplierName)}</option>`).join("");
+            document.getElementById("purItem").innerHTML = fItems.map(i =>
+                `<option value="${i.id}" data-rate="${i.unitCostInr}">${PoultryApp.escapeHtml(i.itemName)} (${i.currentStock} ${i.unit} in stock)</option>`
+            ).join("");
+            prefillItemRate();
+        }
+
+        function prefillItemRate() {
+            const opt = document.getElementById("purItem").selectedOptions[0];
+            if (opt) {
+                document.getElementById("purRate").value = opt.getAttribute("data-rate") || "0";
+                calcInvoicePreview();
+            }
+        }
+
+        function calcInvoicePreview() {
+            const qty = parseFloat(document.getElementById("purQty").value || "0");
+            const rate = parseFloat(document.getElementById("purRate").value || "0");
+            const tr = parseFloat(document.getElementById("purTransport").value || "0");
+            const total = Math.round(((qty * rate) + tr) * 100) / 100;
+            document.getElementById("previewTotalInr").textContent = "₹" + total.toLocaleString("en-IN");
+            document.getElementById("purPaid").value = total;
+            calcBalancePreview();
+        }
+
+        function calcBalancePreview() {
+            const qty = parseFloat(document.getElementById("purQty").value || "0");
+            const rate = parseFloat(document.getElementById("purRate").value || "0");
+            const tr = parseFloat(document.getElementById("purTransport").value || "0");
+            const total = Math.round(((qty * rate) + tr) * 100) / 100;
+            const paid = parseFloat(document.getElementById("purPaid").value || "0");
+            const bal = Math.max(0, Math.round((total - paid) * 100) / 100);
+            document.getElementById("previewBalanceInr").textContent = `Balance Payable: ₹${bal.toLocaleString("en-IN")}`;
+        }
+
+        function renderPurchases(list) {
+            const el = document.getElementById("purchaseHistoryList");
+            if (list.length === 0) {
+                el.innerHTML = `<div class="p-3 bg-light rounded-3 text-muted">No purchase invoices recorded yet.</div>`;
+                return;
+            }
+            el.innerHTML = list.map(p => {
+                const statusBadge = p.paymentStatus === "PAID" ? "bg-success" : (p.paymentStatus === "PARTIAL" ? "bg-warning text-dark" : "bg-danger");
+                return `
+                <div class="p-3 rounded-3 border bg-light">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div>
+                            <span class="badge bg-dark me-1">${PoultryApp.escapeHtml(p.invoiceNumber)}</span>
+                            <strong>${PoultryApp.escapeHtml(p.itemName)}</strong>
+                            <span class="badge ${statusBadge} ms-1">${p.paymentStatus}</span>
+                        </div>
+                        <div class="fs-5 fw-bold text-success">₹${Number(p.totalInvoiceAmount).toLocaleString("en-IN")}</div>
+                    </div>
+                    <div class="small text-muted mt-1">
+                        🚚 ${PoultryApp.escapeHtml(p.supplierName)} • 📅 ${p.purchaseDate} •
+                        Qty: <strong>${p.quantityPurchased} ${PoultryApp.escapeHtml(p.unit)}</strong> @ ₹${p.purchaseRatePerUnit}/${PoultryApp.escapeHtml(p.unit)}
+                        ${p.balancePayable > 0 ? ` • <span class="text-danger fw-bold">Credit Due: ₹${Number(p.balancePayable).toLocaleString("en-IN")}</span>` : ''}
+                    </div>
+                </div>`;
+            }).join("");
+        }
+    </script>
+</body>
+</html>

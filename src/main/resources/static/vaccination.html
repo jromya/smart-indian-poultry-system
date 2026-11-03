@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vaccination Schedule - Smart Indian Poultry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div id="appNavbarMount"></div>
+
+    <main class="container py-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <div>
+                <h2 class="fw-bold text-success mb-1">💉 <span data-i18n="nav_vaccination">Vaccination Schedule</span></h2>
+                <p class="text-muted mb-0">Breed-specific veterinary schedules for Commercial Broilers, 72-Week Layers, and Indigenous/Rural Desi Flocks.</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn-agri-outline" id="btnGenSchedule" onclick="generateBreedSchedule()">
+                    ✨ Auto-Generate Breed Schedule
+                </button>
+                <button type="button" class="btn-agri" id="btnAddCustomVax" data-bs-toggle="modal" data-bs-target="#addVaccineModal">
+                    ➕ Add Custom Vaccine
+                </button>
+            </div>
+        </div>
+
+        <!-- Batch Selector Card -->
+        <div class="agri-card p-3 mb-4">
+            <div class="row align-items-center g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold mb-1">Select Poultry Batch to View / Administer Vaccines</label>
+                    <select class="form-select form-select-lg" id="vaxBatchSelect" onchange="loadVaccinations()"></select>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex gap-3 flex-wrap justify-content-md-end" id="vaxSummaryBadges"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vaccination Timeline Cards -->
+        <div id="vaccinationTimeline" class="row g-3"></div>
+    </main>
+
+    <!-- Add Custom Vaccine Modal -->
+    <div class="modal fade" id="addVaccineModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form class="modal-content rounded-4" id="customVaxForm">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold">➕ Add Custom Veterinary Vaccine</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Vaccine Name *</label>
+                        <input type="text" class="form-control" id="cvName" placeholder="e.g. Infectious Coryza Booster" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Target Disease *</label>
+                        <input type="text" class="form-control" id="cvDisease" placeholder="e.g. Fowl Coryza" required>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold">Bird Age (Days)</label>
+                            <input type="number" min="1" class="form-control" id="cvAge" value="28">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold">Scheduled Date *</label>
+                            <input type="date" class="form-control" id="cvDate" required>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold">Route</label>
+                            <select class="form-select" id="cvRoute">
+                                <option value="EYE_DROP">Eye / Nasal Drop</option>
+                                <option value="DRINKING_WATER">Drinking Water</option>
+                                <option value="SUBCUTANEOUS">Subcutaneous (S/C)</option>
+                                <option value="WING_WEB">Wing Web Stab</option>
+                                <option value="INTRAMUSCULAR">Intramuscular (I/M)</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold">Dosage / Bird</label>
+                            <input type="text" class="form-control" id="cvDosage" value="1 dose / bird">
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold">Veterinary Guidance Notes</label>
+                        <input type="text" class="form-control" id="cvNotes" placeholder="Maintain cold chain 2-8°C">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-agri w-100">Save to Schedule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Complete Vaccine Modal -->
+    <div class="modal fade" id="completeVaxModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form class="modal-content rounded-4" id="completeVaxForm">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold">✅ Record Vaccine Administration</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="compVaxId">
+                    <p class="fw-bold text-success mb-3" id="compVaxTitle"></p>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Administered Date *</label>
+                        <input type="date" class="form-control form-control-lg" id="compDate" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Deduct From Refrigerator Vaccine Stock (Optional)</label>
+                        <select class="form-select" id="compInvSelect"></select>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold">Doses Used</label>
+                            <input type="number" min="0" step="1" class="form-control" id="compDoses" value="1000">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold">Batch / Vial Lot</label>
+                            <input type="text" class="form-control" id="compLot" placeholder="VH-LAS-77">
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold">Remarks</label>
+                        <input type="text" class="form-control" id="compNotes" placeholder="Administered smoothly in cool morning hours">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-agri w-100">Mark Vaccine COMPLETED</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/i18n.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let batches = [];
+        let vaccineItems = [];
+
+        (async function init() {
+            const user = await PoultryApp.requireAuth(["SUPER_ADMIN", "FARM_ADMIN", "FARM_MANAGER", "FARMER"]);
+            if (!user) return;
+            PoultryApp.renderProtectedShell("vaccination");
+            if (user.role === "FARMER") {
+                document.getElementById("btnGenSchedule").classList.add("d-none");
+                document.getElementById("btnAddCustomVax").classList.add("d-none");
+            }
+            const todayStr = new Date().toISOString().split("T")[0];
+            document.getElementById("cvDate").value = todayStr;
+            document.getElementById("compDate").value = todayStr;
+
+            const [bRes, vInvRes] = await Promise.all([
+                PoultryApp.apiFetch("/api/batches"),
+                PoultryApp.apiFetch("/api/inventory?category=VACCINE")
+            ]);
+            batches = bRes.data || [];
+            vaccineItems = vInvRes.data || [];
+
+            document.getElementById("vaxBatchSelect").innerHTML = batches.map(b =>
+                `<option value="${b.id}" data-farm="${b.farmId}" data-birds="${b.currentLiveBirds}">${PoultryApp.escapeHtml(b.batchCode)} — ${PoultryApp.escapeHtml(b.breedName)} (${b.batchCategory})</option>`
+            ).join("");
+
+            await loadVaccinations();
+
+            document.getElementById("customVaxForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                try {
+                    const payload = {
+                        batchId: document.getElementById("vaxBatchSelect").value,
+                        vaccineName: document.getElementById("cvName").value,
+                        targetDisease: document.getElementById("cvDisease").value,
+                        recommendedAgeDays: parseInt(document.getElementById("cvAge").value || "1", 10),
+                        scheduledDate: document.getElementById("cvDate").value,
+                        route: document.getElementById("cvRoute").value,
+                        dosagePerBird: document.getElementById("cvDosage").value,
+                        veterinaryGuidanceNotes: document.getElementById("cvNotes").value
+                    };
+                    await PoultryApp.apiFetch("/api/vaccinations", { method: "POST", body: JSON.stringify(payload) });
+                    bootstrap.Modal.getInstance(document.getElementById("addVaccineModal")).hide();
+                    PoultryApp.showToast("Custom vaccination added to schedule!", "success");
+                    await loadVaccinations();
+                } catch (err) {
+                    PoultryApp.showToast(err.message, "danger");
+                }
+            });
+
+            document.getElementById("completeVaxForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                try {
+                    const id = document.getElementById("compVaxId").value;
+                    const payload = {
+                        administeredDate: document.getElementById("compDate").value,
+                        inventoryItemId: document.getElementById("compInvSelect").value || null,
+                        dosesUsed: parseFloat(document.getElementById("compDoses").value || "0"),
+                        vaccineBatchLot: document.getElementById("compLot").value,
+                        veterinaryGuidanceNotes: document.getElementById("compNotes").value
+                    };
+                    await PoultryApp.apiFetch(`/api/vaccinations/${id}/complete`, { method: "PATCH", body: JSON.stringify(payload) });
+                    bootstrap.Modal.getInstance(document.getElementById("completeVaxModal")).hide();
+                    PoultryApp.showToast("Vaccination marked COMPLETED!", "success");
+                    await loadVaccinations();
+                } catch (err) {
+                    PoultryApp.showToast(err.message, "danger");
+                }
+            });
+        })();
+
+        async function generateBreedSchedule() {
+            const batchId = document.getElementById("vaxBatchSelect").value;
+            if (!batchId) return;
+            try {
+                const res = await PoultryApp.apiFetch(`/api/vaccinations/generate-schedule/${batchId}`, { method: "POST" });
+                PoultryApp.showToast(res.message, "success");
+                await loadVaccinations();
+            } catch (err) {
+                PoultryApp.showToast(err.message, "warning");
+            }
+        }
+
+        async function loadVaccinations() {
+            const batchId = document.getElementById("vaxBatchSelect").value;
+            if (!batchId) return;
+            const res = await PoultryApp.apiFetch(`/api/vaccinations?batchId=${encodeURIComponent(batchId)}`);
+            const list = res.data || [];
+
+            const comp = list.filter(v => v.status === "COMPLETED").length;
+            const over = list.filter(v => v.status === "OVERDUE").length;
+            const sched = list.filter(v => v.status === "SCHEDULED").length;
+            document.getElementById("vaxSummaryBadges").innerHTML = `
+                <span class="badge bg-success fs-6 px-3 py-2">✅ Completed: ${comp}</span>
+                <span class="badge bg-primary fs-6 px-3 py-2">📅 Upcoming: ${sched}</span>
+                ${over > 0 ? `<span class="badge bg-danger fs-6 px-3 py-2">🚨 Overdue: ${over}</span>` : ''}
+            `;
+
+            const el = document.getElementById("vaccinationTimeline");
+            if (list.length === 0) {
+                el.innerHTML = `<div class="col-12"><div class="agri-card p-4 text-center text-muted">No vaccination schedule configured yet for this batch. Tap <strong>Auto-Generate Breed Schedule</strong> above!</div></div>`;
+                return;
+            }
+
+            el.innerHTML = list.map(v => {
+                const isDone = v.status === "COMPLETED";
+                const isOverdue = v.status === "OVERDUE";
+                const badgeCls = isDone ? "bg-success" : (isOverdue ? "bg-danger" : "bg-warning text-dark");
+                return `
+                <div class="col-md-6 col-lg-4">
+                    <div class="agri-card p-4 h-100 ${isOverdue ? 'border-danger border-2' : ''}">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-dark">Day ${v.recommendedAgeDays || '-'}</span>
+                            <span class="badge ${badgeCls}">${v.status}</span>
+                        </div>
+                        <h5 class="fw-bold text-success mb-1">${PoultryApp.escapeHtml(v.vaccineName)}</h5>
+                        <div class="small fw-semibold text-muted mb-2">Protects: ${PoultryApp.escapeHtml(v.targetDisease)}</div>
+                        <div class="small mb-1">📅 <strong>Scheduled:</strong> ${v.scheduledDate}</div>
+                        <div class="small mb-1">💧 <strong>Route:</strong> ${PoultryApp.escapeHtml(v.route)} (${PoultryApp.escapeHtml(v.dosagePerBird || '')})</div>
+                        ${v.veterinaryGuidanceNotes ? `<div class="small text-muted mt-2 p-2 bg-light rounded-3">👨‍⚕️ ${PoultryApp.escapeHtml(v.veterinaryGuidanceNotes)}</div>` : ''}
+                        ${isDone
+                            ? `<div class="mt-3 pt-2 border-top small text-success fw-bold">✅ Given on ${v.administeredDate} by ${PoultryApp.escapeHtml(v.administeredBy || 'Staff')}</div>`
+                            : `<button class="btn-agri w-100 mt-3 py-2" onclick="openCompleteModal('${v.id}', '${PoultryApp.escapeHtml(v.vaccineName)}', '${v.farmId}')">💉 Mark Administered</button>`
+                        }
+                    </div>
+                </div>`;
+            }).join("");
+        }
+
+        function openCompleteModal(id, name, farmId) {
+            document.getElementById("compVaxId").value = id;
+            document.getElementById("compVaxTitle").textContent = name;
+            const bOpt = document.getElementById("vaxBatchSelect").selectedOptions[0];
+            if (bOpt) document.getElementById("compDoses").value = bOpt.getAttribute("data-birds") || "1000";
+
+            const farmVax = vaccineItems.filter(i => i.farmId === farmId);
+            document.getElementById("compInvSelect").innerHTML =
+                `<option value="">-- Do not deduct from inventory --</option>` +
+                farmVax.map(i => `<option value="${i.id}">${PoultryApp.escapeHtml(i.itemName)} (${i.currentStock} ${i.unit} avail)</option>`).join("");
+
+            new bootstrap.Modal(document.getElementById("completeVaxModal")).show();
+        }
+    </script>
+</body>
+</html>

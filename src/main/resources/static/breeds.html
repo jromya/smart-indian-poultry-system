@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indian Chicken Breeds - Smart Indian Poultry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div id="appNavbarMount"></div>
+
+    <main class="container py-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+            <div>
+                <h2 class="fw-bold text-success mb-1">🐔 <span data-i18n="nav_breeds">Indian Breeds</span></h2>
+                <p class="text-muted mb-0">Breed-specific growth, FCR, feed, and egg production targets — never one-size-fits-all.</p>
+            </div>
+            <button class="btn-agri d-none" id="btnAddBreed" onclick="openBreedModal()">
+                ➕ <span data-i18n="btn_add_breed">Add Custom Breed</span>
+            </button>
+        </div>
+
+        <!-- Category Filter Buttons -->
+        <div class="d-flex flex-wrap gap-2 mb-4">
+            <button class="btn btn-success rounded-pill px-4 fw-semibold cat-filter-btn" data-cat="" onclick="filterCategory('', this)">
+                🌟 <span data-i18n="cat_all">All Breeds</span>
+            </button>
+            <button class="btn btn-outline-success rounded-pill px-4 fw-semibold cat-filter-btn" data-cat="INDIGENOUS" onclick="filterCategory('INDIGENOUS', this)">
+                🇮🇳 <span data-i18n="cat_indigenous">Indigenous (Desi)</span>
+            </button>
+            <button class="btn btn-outline-success rounded-pill px-4 fw-semibold cat-filter-btn" data-cat="IMPROVED_RURAL" onclick="filterCategory('IMPROVED_RURAL', this)">
+                🌾 <span data-i18n="cat_rural">Improved Rural</span>
+            </button>
+            <button class="btn btn-outline-success rounded-pill px-4 fw-semibold cat-filter-btn" data-cat="COMMERCIAL" onclick="filterCategory('COMMERCIAL', this)">
+                🏭 <span data-i18n="cat_commercial">Commercial</span>
+            </button>
+        </div>
+
+        <div class="row g-4" id="breedsGrid"></div>
+    </main>
+
+    <!-- Add / Edit Breed Modal -->
+    <div class="modal fade" id="breedModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content rounded-4">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold">🐔 Configure Poultry Breed Targets</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="breedForm">
+                        <input type="hidden" id="editBreedId">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Breed Code *</label>
+                                <input type="text" id="breedCode" class="form-control" placeholder="IND-TELLICHERRY" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Breed Name *</label>
+                                <input type="text" id="breedName" class="form-control" placeholder="Tellicherry" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Local Language Name *</label>
+                                <input type="text" id="localLanguageName" class="form-control" placeholder="തലശ്ശേരി കോഴി" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Category *</label>
+                                <select id="breedCategory" class="form-select">
+                                    <option value="INDIGENOUS">INDIGENOUS (Desi)</option>
+                                    <option value="IMPROVED_RURAL">IMPROVED_RURAL</option>
+                                    <option value="COMMERCIAL">COMMERCIAL</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Primary Purpose *</label>
+                                <select id="primaryPurpose" class="form-select">
+                                    <option value="DUAL_PURPOSE">Dual Purpose (Meat + Eggs)</option>
+                                    <option value="MEAT">Meat / Broiler</option>
+                                    <option value="EGG">Egg Layer</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Chick Price (₹ INR) *</label>
+                                <input type="number" step="0.5" id="purchasePricePerChick" class="form-control" value="45" required>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Origin / Region *</label>
+                                <input type="text" id="origin" class="form-control" placeholder="Malabar Coast, Kerala" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Market Age (Days)</label>
+                                <input type="number" id="standardMarketAgeDays" class="form-control" value="120">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Target Weight (g)</label>
+                                <input type="number" id="expectedMarketWeightGrams" class="form-control" value="1500">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Target FCR</label>
+                                <input type="number" step="0.05" id="targetFcr" class="form-control" value="3.2">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Annual Eggs</label>
+                                <input type="number" id="annualEggCountTarget" class="form-control" value="85">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Daily Adult Feed (g)</label>
+                                <input type="number" id="dailyAdultFeedGrams" class="form-control" value="90">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Acceptable Mortality (%)</label>
+                                <input type="number" step="0.1" id="acceptableMortalityPct" class="form-control" value="4.0">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">Feed & Management Summary</label>
+                                <input type="text" id="feedScheduleSummary" class="form-control" placeholder="Starter mash 0-4 wk + semi-intensive forage">
+                            </div>
+                        </div>
+                        <div class="mt-4 d-flex gap-2 justify-content-end">
+                            <button type="button" class="btn-agri-outline" data-bs-dismiss="modal" data-i18n="btn_cancel">Cancel</button>
+                            <button type="submit" class="btn-agri" data-i18n="btn_save">Save Details</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/i18n.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let breedsCache = [];
+        let currentCat = "";
+        let breedModal = null;
+        let canManageBreeds = false;
+
+        function badgeForCat(cat) {
+            if (cat === "INDIGENOUS") return `<span class="badge rounded-pill badge-indigenous">🇮🇳 Indigenous</span>`;
+            if (cat === "IMPROVED_RURAL") return `<span class="badge rounded-pill badge-rural">🌾 Improved Rural</span>`;
+            return `<span class="badge rounded-pill badge-commercial">🏭 Commercial</span>`;
+        }
+
+        async function loadBreeds() {
+            const q = currentCat ? `?category=${encodeURIComponent(currentCat)}` : "";
+            const res = await PoultryApp.apiFetch("/api/breeds" + q);
+            breedsCache = res.data || [];
+            const grid = document.getElementById("breedsGrid");
+            const lang = getCurrentLang();
+
+            grid.innerHTML = breedsCache.map(b => {
+                const g = b.expectedGrowth || {};
+                const egg = b.eggProduction || {};
+                const feed = b.feedRequirements || {};
+                const perf = b.performanceTargets || {};
+                const localName = (b.localizedNames && b.localizedNames[lang]) ? b.localizedNames[lang] : b.localLanguageName;
+
+                return `
+                <div class="col-md-6 col-xl-4">
+                    <div class="agri-card p-4 h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                ${badgeForCat(b.breedCategory)}
+                                <span class="fw-bold text-success fs-5">₹${b.purchasePricePerChick}/chick</span>
+                            </div>
+                            <h4 class="fw-bold text-success mb-0">${PoultryApp.escapeHtml(b.breedName)}</h4>
+                            <div class="text-secondary fw-semibold mb-2">${PoultryApp.escapeHtml(localName)} • <small>${PoultryApp.escapeHtml(b.primaryPurpose)}</small></div>
+                            <p class="small text-muted mb-3">📍 ${PoultryApp.escapeHtml(b.origin)}</p>
+
+                            <div class="bg-light rounded-3 p-3 small mb-3">
+                                <div class="row g-2">
+                                    <div class="col-6"><strong>⏱️ Cycle/Market:</strong> ${g.standardMarketAgeDays || '-'} days</div>
+                                    <div class="col-6"><strong>⚖️ Market Wt:</strong> ${g.expectedMarketWeightGrams || '-'} g</div>
+                                    <div class="col-6"><strong>📈 Target FCR:</strong> ${perf.targetFcr || '-'}</div>
+                                    <div class="col-6"><strong>🥚 Annual Eggs:</strong> ${egg.eggLayerRelevant ? (egg.annualEggCountTarget + ' (' + (egg.eggShellColor || '') + ')') : 'Meat Only'}</div>
+                                    <div class="col-6"><strong>🌾 Daily Feed:</strong> ${feed.dailyAdultFeedGrams || '-'} g/day</div>
+                                    <div class="col-6"><strong>🛡️ Max Mort:</strong> ${perf.acceptableMortalityPct || '-'}%</div>
+                                </div>
+                            </div>
+                            <p class="small text-muted mb-2">${PoultryApp.escapeHtml(perf.breedSpecificNotes || g.growthSummary || '')}</p>
+                        </div>
+                        ${canManageBreeds ? `<button class="btn-agri-outline btn-sm w-100 mt-2" onclick="editBreed('${b.id}')">✏️ Edit Breed Targets</button>` : ""}
+                    </div>
+                </div>`;
+            }).join("");
+        }
+
+        function filterCategory(cat, btn) {
+            currentCat = cat;
+            document.querySelectorAll(".cat-filter-btn").forEach(b => {
+                b.classList.remove("btn-success");
+                b.classList.add("btn-outline-success");
+            });
+            btn.classList.remove("btn-outline-success");
+            btn.classList.add("btn-success");
+            loadBreeds();
+        }
+
+        function openBreedModal() {
+            document.getElementById("editBreedId").value = "";
+            document.getElementById("breedForm").reset();
+            breedModal.show();
+        }
+
+        function editBreed(id) {
+            const b = breedsCache.find(x => x.id === id);
+            if (!b) return;
+            document.getElementById("editBreedId").value = b.id;
+            document.getElementById("breedCode").value = b.breedCode;
+            document.getElementById("breedName").value = b.breedName;
+            document.getElementById("localLanguageName").value = b.localLanguageName;
+            document.getElementById("breedCategory").value = b.breedCategory;
+            document.getElementById("primaryPurpose").value = b.primaryPurpose;
+            document.getElementById("purchasePricePerChick").value = b.purchasePricePerChick;
+            document.getElementById("origin").value = b.origin;
+            document.getElementById("standardMarketAgeDays").value = b.expectedGrowth?.standardMarketAgeDays || 100;
+            document.getElementById("expectedMarketWeightGrams").value = b.expectedGrowth?.expectedMarketWeightGrams || 1500;
+            document.getElementById("targetFcr").value = b.performanceTargets?.targetFcr || 2.5;
+            document.getElementById("annualEggCountTarget").value = b.eggProduction?.annualEggCountTarget || 0;
+            document.getElementById("dailyAdultFeedGrams").value = b.feedRequirements?.dailyAdultFeedGrams || 95;
+            document.getElementById("acceptableMortalityPct").value = b.performanceTargets?.acceptableMortalityPct || 4.0;
+            document.getElementById("feedScheduleSummary").value = b.feedRequirements?.feedScheduleSummary || "";
+            breedModal.show();
+        }
+
+        (async function init() {
+            const user = await PoultryApp.requireAuth();
+            if (!user) return;
+            PoultryApp.renderProtectedShell("breeds");
+            breedModal = new bootstrap.Modal(document.getElementById("breedModal"));
+            canManageBreeds = ["SUPER_ADMIN", "FARM_ADMIN"].includes(user.role);
+            if (canManageBreeds) document.getElementById("btnAddBreed").classList.remove("d-none");
+            await loadBreeds();
+
+            document.getElementById("breedForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const editId = document.getElementById("editBreedId").value;
+                const annualEggs = Number(document.getElementById("annualEggCountTarget").value || 0);
+                const payload = {
+                    breedCode: document.getElementById("breedCode").value,
+                    breedName: document.getElementById("breedName").value,
+                    localLanguageName: document.getElementById("localLanguageName").value,
+                    breedCategory: document.getElementById("breedCategory").value,
+                    primaryPurpose: document.getElementById("primaryPurpose").value,
+                    purchasePricePerChick: Number(document.getElementById("purchasePricePerChick").value),
+                    origin: document.getElementById("origin").value,
+                    expectedGrowth: {
+                        standardMarketAgeDays: Number(document.getElementById("standardMarketAgeDays").value),
+                        expectedMarketWeightGrams: Number(document.getElementById("expectedMarketWeightGrams").value)
+                    },
+                    eggProduction: {
+                        eggLayerRelevant: annualEggs > 0,
+                        annualEggCountTarget: annualEggs
+                    },
+                    feedRequirements: {
+                        dailyAdultFeedGrams: Number(document.getElementById("dailyAdultFeedGrams").value),
+                        feedScheduleSummary: document.getElementById("feedScheduleSummary").value
+                    },
+                    performanceTargets: {
+                        targetFcr: Number(document.getElementById("targetFcr").value),
+                        acceptableMortalityPct: Number(document.getElementById("acceptableMortalityPct").value)
+                    }
+                };
+                try {
+                    const res = await PoultryApp.apiFetch(editId ? `/api/breeds/${editId}` : "/api/breeds", {
+                        method: editId ? "PUT" : "POST",
+                        body: JSON.stringify(payload)
+                    });
+                    breedModal.hide();
+                    PoultryApp.showToast(res.message, "success");
+                    await loadBreeds();
+                } catch (err) {
+                    PoultryApp.showToast(err.message, "danger");
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Egg Collection - Smart Indian Poultry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div id="appNavbarMount"></div>
+
+    <main class="container py-4">
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="agri-card p-4">
+                    <h3 class="fw-bold text-success mb-1">🧺 <span data-i18n="nav_egg_entry">Egg Collection</span> & Grading</h3>
+                    <p class="text-muted small mb-3">Automatically calculates Good Eggs & Hen-Day Production % from live hens.</p>
+
+                    <form id="eggForm">
+                        <div class="row g-3">
+                            <div class="col-md-7">
+                                <label class="form-label">Select Layer / Desi Batch *</label>
+                                <select id="batchId" class="form-select" onchange="onBatchChange()" required></select>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label">Collection Date *</label>
+                                <input type="date" id="recordDate" class="form-control" required>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="p-3 rounded-4 bg-warning bg-opacity-10 border border-warning d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="small text-muted">Good Saleable Eggs</div>
+                                        <div class="fs-3 fw-bold text-success" id="liveGoodPreview">0</div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="small text-muted">Hen-Day Production %</div>
+                                        <div class="fs-3 fw-bold text-dark" id="liveHdepPreview">0%</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Total Eggs Collected *</label>
+                                <input type="number" id="totalEggs" class="form-control" min="0" value="0" oninput="updateEggPreview()" required>
+                            </div>
+                            <div class="col-md-2 col-4">
+                                <label class="form-label">Damaged</label>
+                                <input type="number" id="damagedEggs" class="form-control" min="0" value="0" oninput="updateEggPreview()">
+                            </div>
+                            <div class="col-md-2 col-4">
+                                <label class="form-label">Broken</label>
+                                <input type="number" id="brokenEggs" class="form-control" min="0" value="0" oninput="updateEggPreview()">
+                            </div>
+                            <div class="col-md-2 col-4">
+                                <label class="form-label">Dirty</label>
+                                <input type="number" id="dirtyEggs" class="form-control" min="0" value="0" oninput="updateEggPreview()">
+                            </div>
+
+                            <div class="col-12"><hr class="my-1"><small class="fw-bold text-success">Egg Size Grading (Optional — defaults to Medium)</small></div>
+                            <div class="col-3">
+                                <label class="form-label small">Small</label>
+                                <input type="number" id="gradeSmall" class="form-control" min="0" value="0">
+                            </div>
+                            <div class="col-3">
+                                <label class="form-label small">Medium</label>
+                                <input type="number" id="gradeMedium" class="form-control" min="0" value="0">
+                            </div>
+                            <div class="col-3">
+                                <label class="form-label small">Large</label>
+                                <input type="number" id="gradeLarge" class="form-control" min="0" value="0">
+                            </div>
+                            <div class="col-3">
+                                <label class="form-label small">XL</label>
+                                <input type="number" id="gradeExtraLarge" class="form-control" min="0" value="0">
+                            </div>
+
+                            <div class="col-12"><hr class="my-1"><small class="fw-bold text-success">Same-Day Farm-Gate Egg Sale (Optional)</small></div>
+                            <div class="col-md-6">
+                                <label class="form-label">Eggs Sold Today (Pieces)</label>
+                                <input type="number" id="eggsSoldCount" class="form-control" min="0" value="0">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Selling Price per Egg (₹)</label>
+                                <input type="number" step="0.1" id="pricePerEgg" class="form-control" min="0" value="6.0">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-agri w-100 mt-4">✅ Save Egg Collection</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="agri-card p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="fw-bold text-success mb-0">📜 Recent Egg Collection Register</h4>
+                        <a href="/layer-management.html" class="btn-agri-outline btn-sm text-decoration-none">📊 Charts</a>
+                    </div>
+                    <div id="eggHistoryList" class="d-grid gap-2" style="max-height: 680px; overflow-y:auto;"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/i18n.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let batchesMap = {};
+
+        function updateEggPreview() {
+            const b = batchesMap[document.getElementById("batchId").value];
+            const hens = b ? Math.max(1, b.currentLiveBirds) : 1;
+            const total = Number(document.getElementById("totalEggs").value || 0);
+            const dam = Number(document.getElementById("damagedEggs").value || 0);
+            const brk = Number(document.getElementById("brokenEggs").value || 0);
+            const drt = Number(document.getElementById("dirtyEggs").value || 0);
+            const good = total - dam - brk - drt;
+            const pct = ((total * 100.0) / hens).toFixed(1);
+            document.getElementById("liveGoodPreview").textContent = good.toLocaleString("en-IN");
+            document.getElementById("liveHdepPreview").textContent = pct + "%";
+        }
+
+        async function onBatchChange() {
+            const batchId = document.getElementById("batchId").value;
+            if (!batchId) return;
+            updateEggPreview();
+            const res = await PoultryApp.apiFetch(`/api/egg-records?batchId=${encodeURIComponent(batchId)}`);
+            const list = res.data || [];
+            document.getElementById("eggHistoryList").innerHTML = list.slice(0, 20).map(r => `
+                <div class="p-3 rounded-3 bg-light border">
+                    <div class="d-flex justify-content-between">
+                        <strong class="text-success">📅 ${r.recordDate}</strong>
+                        <span class="badge bg-success">HDEP: ${r.henDayProductionPct}%</span>
+                    </div>
+                    <div class="small mt-1">
+                        Total: <strong>${r.totalEggs}</strong> | Good: <strong class="text-success">${r.goodEggs}</strong> | Defects: ${r.damagedEggs + r.brokenEggs + r.dirtyEggs}
+                        ${r.eggsSoldCount > 0 ? ` • Sold: ${r.eggsSoldCount} (₹${r.eggSaleRevenue})` : ""}
+                    </div>
+                </div>
+            `).join("") || `<div class="p-4 text-center text-muted">No egg records yet.</div>`;
+        }
+
+        (async function init() {
+            const user = await PoultryApp.requireAuth(["SUPER_ADMIN", "FARM_ADMIN", "FARM_MANAGER", "FARMER"]);
+            if (!user) return;
+            PoultryApp.renderProtectedShell("eggs");
+            document.getElementById("recordDate").value = new Date().toISOString().split("T")[0];
+
+            const res = await PoultryApp.apiFetch("/api/batches");
+            const batches = (res.data || []).filter(b => b.batchCategory === "LAYER" || b.batchCategory === "INDIGENOUS");
+            const sel = document.getElementById("batchId");
+            sel.innerHTML = batches.map(b => {
+                batchesMap[b.id] = b;
+                return `<option value="${b.id}">${PoultryApp.escapeHtml(b.batchCode)} — ${PoultryApp.escapeHtml(b.batchName)} (${b.currentLiveBirds} hens)</option>`;
+            }).join("");
+            await onBatchChange();
+
+            document.getElementById("eggForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                try {
+                    const apiRes = await PoultryApp.apiFetch("/api/egg-records", {
+                        method: "POST",
+                        body: JSON.stringify({
+                            batchId: document.getElementById("batchId").value,
+                            recordDate: document.getElementById("recordDate").value,
+                            totalEggs: Number(document.getElementById("totalEggs").value || 0),
+                            damagedEggs: Number(document.getElementById("damagedEggs").value || 0),
+                            brokenEggs: Number(document.getElementById("brokenEggs").value || 0),
+                            dirtyEggs: Number(document.getElementById("dirtyEggs").value || 0),
+                            gradeSmall: Number(document.getElementById("gradeSmall").value || 0),
+                            gradeMedium: Number(document.getElementById("gradeMedium").value || 0),
+                            gradeLarge: Number(document.getElementById("gradeLarge").value || 0),
+                            gradeExtraLarge: Number(document.getElementById("gradeExtraLarge").value || 0),
+                            eggsSoldCount: Number(document.getElementById("eggsSoldCount").value || 0),
+                            pricePerEgg: Number(document.getElementById("pricePerEgg").value || 0)
+                        })
+                    });
+                    PoultryApp.showToast(apiRes.message, "success");
+                    await onBatchChange();
+                } catch (err) {
+                    PoultryApp.showToast(err.message, "danger");
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

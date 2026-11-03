@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feed Management - Smart Indian Poultry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div id="appNavbarMount"></div>
+
+    <main class="container py-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <div>
+                <h2 class="fw-bold text-success mb-1">🌾 <span data-i18n="nav_feed">Feed Management</span></h2>
+                <p class="text-muted mb-0">Issue Starter, Grower, Finisher, Layer Mash or Desi Grain Mix to batches — deducts godown stock automatically.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn-agri-outline" onclick="PoultryApp.speakText('audio_feed_help')">
+                    🔊 <span data-i18n="btn_listen_help">Listen Audio Guide</span>
+                </button>
+                <a href="/purchases.html" id="buyFeedBtn" class="btn-agri text-decoration-none">🧾 Buy Feed Stock</a>
+            </div>
+        </div>
+
+        <!-- Feed Stock Cards -->
+        <div class="row g-3 mb-4" id="feedStockCards"></div>
+
+        <div class="row g-4">
+            <!-- Issue Feed Form -->
+            <div class="col-lg-5">
+                <div class="agri-card p-4">
+                    <h5 class="fw-bold text-success mb-3">🥣 Issue Daily Feed to Batch</h5>
+                    <div id="feedIssueFormDraftBanner" class="alert alert-info py-2 small d-none" data-i18n="draft_restored">
+                        Saved offline draft restored automatically.
+                    </div>
+
+                    <form id="feedIssueForm">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Select Active Batch *</label>
+                            <select class="form-select form-select-lg" name="batchId" id="batchSelect" required onchange="onBatchChanged()"></select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Select Feed Bag / Stock from Godown *</label>
+                            <select class="form-select form-select-lg" name="inventoryItemId" id="feedItemSelect" required onchange="updateCostPreview()"></select>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-bold">Feed Phase *</label>
+                                <select class="form-select form-select-lg" name="feedCategory" id="feedCategorySelect">
+                                    <option value="STARTER">Starter</option>
+                                    <option value="GROWER">Grower</option>
+                                    <option value="FINISHER">Finisher</option>
+                                    <option value="LAYER_MASH">Layer Mash</option>
+                                    <option value="DESI_GRAIN_MIX">Desi Grain / Azolla Mix</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold">Date *</label>
+                                <input type="date" class="form-control form-control-lg" name="recordDate" id="recordDateInput" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Quantity Issued (KG) *</label>
+                            <input type="number" step="0.1" min="0.5" class="form-control form-control-lg" name="quantityIssuedKg" id="qtyKgInput" placeholder="e.g. 250" required oninput="updateCostPreview()">
+                            <div class="mt-2 p-2 rounded-3 bg-light border d-flex justify-content-between small fw-semibold">
+                                <span id="availStockPreview">Available: 0 kg</span>
+                                <span class="text-success" id="estCostPreview">Est. Feed Cost: ₹0</span>
+                            </div>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="syncDailyCheck" checked>
+                            <label class="form-check-label fw-semibold small" for="syncDailyCheck">
+                                Also sync feed quantity to Daily Record if logged for this date
+                            </label>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Remarks (Voice Supported)</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control form-control-lg" name="remarks" id="feedRemarksInput" placeholder="Morning + evening ration">
+                                <button type="button" class="btn btn-outline-success px-3" onclick="PoultryApp.startVoiceInput(this, 'feedRemarksInput')">🎤</button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-agri w-100 py-3 fs-5">
+                            ✅ Issue Feed & Reduce Stock
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Chart & Batch Feed Allocation History -->
+            <div class="col-lg-7">
+                <div class="agri-card p-4 mb-4">
+                    <h5 class="fw-bold text-success mb-3">📊 Current Feed Godown Stock (KG)</h5>
+                    <div style="max-height: 220px;">
+                        <canvas id="feedStockChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="agri-card p-4">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                        <h5 class="fw-bold text-success mb-0">📜 Recent Batch Feed Allocations</h5>
+                        <select class="form-select form-select-sm" style="width:auto;" id="historyFilterBatch" onchange="loadFeedHistory()">
+                            <option value="">All Accessible Batches</option>
+                        </select>
+                    </div>
+                    <div id="feedHistoryCards" class="d-grid gap-2"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="/js/i18n.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let allBatches = [];
+        let feedItems = [];
+        let feedChart = null;
+
+        (async function init() {
+            const user = await PoultryApp.requireAuth(["SUPER_ADMIN", "FARM_ADMIN", "FARM_MANAGER", "FARMER"]);
+            if (!user) return;
+            PoultryApp.renderProtectedShell("feed");
+            if (user.role === "FARMER") {
+                document.getElementById("buyFeedBtn").classList.add("d-none");
+            }
+            document.getElementById("recordDateInput").value = new Date().toISOString().split("T")[0];
+
+            await loadInitialData();
+            PoultryApp.bindOfflineDraft("feedIssueForm", "draft_feed_issue_v1");
+
+            document.getElementById("feedIssueForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                try {
+                    const payload = {
+                        batchId: document.getElementById("batchSelect").value,
+                        inventoryItemId: document.getElementById("feedItemSelect").value,
+                        feedCategory: document.getElementById("feedCategorySelect").value,
+                        recordDate: document.getElementById("recordDateInput").value,
+                        quantityIssuedKg: parseFloat(document.getElementById("qtyKgInput").value),
+                        syncDailyRecordFeed: document.getElementById("syncDailyCheck").checked,
+                        remarks: document.getElementById("feedRemarksInput").value
+                    };
+                    const res = await PoultryApp.apiFetch("/api/feed-records", {
+                        method: "POST",
+                        body: JSON.stringify(payload)
+                    });
+                    PoultryApp.showToast(res.message || "Feed issued!", "success");
+                    PoultryApp.clearOfflineDraft("feedIssueForm", "draft_feed_issue_v1");
+                    document.getElementById("qtyKgInput").value = "";
+                    await loadInitialData();
+                } catch (err) {
+                    PoultryApp.showToast(err.message, "danger");
+                }
+            });
+        })();
+
+        async function loadInitialData() {
+            try {
+                const [batchRes, invRes] = await Promise.all([
+                    PoultryApp.apiFetch("/api/batches"),
+                    PoultryApp.apiFetch("/api/inventory?category=FEED")
+                ]);
+                allBatches = (batchRes.data || []).filter(b => b.status !== "COMPLETED");
+                feedItems = invRes.data || [];
+
+                const bSel = document.getElementById("batchSelect");
+                bSel.innerHTML = allBatches.map(b =>
+                    `<option value="${b.id}" data-farm="${b.farmId}">${PoultryApp.escapeHtml(b.batchCode)} — ${PoultryApp.escapeHtml(b.breedName)} (${b.currentLiveBirds} birds)</option>`
+                ).join("");
+
+                const fHist = document.getElementById("historyFilterBatch");
+                const prevFilter = fHist.value;
+                fHist.innerHTML = `<option value="">All Accessible Batches</option>` +
+                    (batchRes.data || []).map(b => `<option value="${b.id}">${PoultryApp.escapeHtml(b.batchCode)} (${PoultryApp.escapeHtml(b.breedName)})</option>`).join("");
+                fHist.value = prevFilter;
+
+                renderFeedStockCards();
+                onBatchChanged();
+                await loadFeedHistory();
+            } catch (err) {
+                PoultryApp.showToast(err.message, "danger");
+            }
+        }
+
+        function onBatchChanged() {
+            const bSel = document.getElementById("batchSelect");
+            const opt = bSel.options[bSel.selectedIndex];
+            const farmId = opt ? opt.getAttribute("data-farm") : null;
+            const matchingFeeds = farmId ? feedItems.filter(f => f.farmId === farmId) : feedItems;
+
+            const fSel = document.getElementById("feedItemSelect");
+            if (matchingFeeds.length === 0) {
+                fSel.innerHTML = `<option value="">No feed stock on this farm — purchase/add feed first</option>`;
+            } else {
+                fSel.innerHTML = matchingFeeds.map(f =>
+                    `<option value="${f.id}" data-stock="${f.currentStock}" data-rate="${f.unitCostInr}" data-sub="${f.subCategory || 'STARTER'}">
+                        ${PoultryApp.escapeHtml(f.itemName)} (${f.currentStock} ${f.unit} @ ₹${f.unitCostInr}/kg)
+                    </option>`
+                ).join("");
+                const firstSub = matchingFeeds[0].subCategory;
+                if (firstSub) document.getElementById("feedCategorySelect").value = firstSub;
+            }
+            updateCostPreview();
+        }
+
+        function updateCostPreview() {
+            const fSel = document.getElementById("feedItemSelect");
+            const opt = fSel.options[fSel.selectedIndex];
+            const stock = opt ? parseFloat(opt.getAttribute("data-stock") || "0") : 0;
+            const rate = opt ? parseFloat(opt.getAttribute("data-rate") || "0") : 0;
+            const qty = parseFloat(document.getElementById("qtyKgInput").value || "0");
+            document.getElementById("availStockPreview").textContent = `Available: ${stock.toLocaleString("en-IN")} kg`;
+            document.getElementById("estCostPreview").textContent = `Est. Cost: ₹${(qty * rate).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+        }
+
+        function renderFeedStockCards() {
+            const container = document.getElementById("feedStockCards");
+            container.innerHTML = feedItems.map(f => {
+                const low = f.currentStock <= f.reorderLevel;
+                return `
+                <div class="col-md-6 col-lg-3">
+                    <div class="agri-card p-3 h-100 ${low ? 'border-danger border-2' : ''}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <span class="badge bg-success">${PoultryApp.escapeHtml(f.subCategory || 'FEED')}</span>
+                            ${low ? '<span class="badge bg-danger">⚠️ LOW STOCK</span>' : '<span class="badge bg-light text-dark border">In Stock</span>'}
+                        </div>
+                        <h6 class="fw-bold mt-2 mb-1">${PoultryApp.escapeHtml(f.itemName)}</h6>
+                        <div class="fs-4 fw-bold ${low ? 'text-danger' : 'text-success'}">${Number(f.currentStock).toLocaleString("en-IN")} ${PoultryApp.escapeHtml(f.unit)}</div>
+                        <div class="small text-muted">Rate: ₹${f.unitCostInr}/kg • Value: ₹${Number(f.totalValuationInr).toLocaleString("en-IN")}</div>
+                        <div class="small text-muted">Supplier: ${PoultryApp.escapeHtml(f.preferredSupplierName || 'Direct')}</div>
+                    </div>
+                </div>`;
+            }).join("");
+
+            const ctx = document.getElementById("feedStockChart");
+            if (feedChart) feedChart.destroy();
+            feedChart = new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels: feedItems.map(f => f.itemName),
+                    datasets: [
+                        { label: "Current Stock (KG)", data: feedItems.map(f => f.currentStock), backgroundColor: "#2e7d32" },
+                        { label: "Reorder Alert Level (KG)", data: feedItems.map(f => f.reorderLevel), backgroundColor: "#ffb300" }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        async function loadFeedHistory() {
+            const batchId = document.getElementById("historyFilterBatch").value;
+            const url = batchId ? `/api/feed-records?batchId=${encodeURIComponent(batchId)}` : "/api/feed-records";
+            const res = await PoultryApp.apiFetch(url);
+            const list = res.data || [];
+            const el = document.getElementById("feedHistoryCards");
+            if (list.length === 0) {
+                el.innerHTML = `<div class="p-3 bg-light rounded-3 text-muted">No feed issue records found yet.</div>`;
+                return;
+            }
+            el.innerHTML = list.slice(0, 12).map(r => `
+                <div class="p-3 rounded-3 border bg-light d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <span class="badge bg-success me-1">${PoultryApp.escapeHtml(r.feedCategory)}</span>
+                        <strong>${PoultryApp.escapeHtml(r.feedItemName)}</strong> →
+                        <span class="text-success fw-bold">${PoultryApp.escapeHtml(r.batchCode)}</span>
+                        <div class="small text-muted">Date: ${r.recordDate} • Remaining Stock After: ${r.remainingStockKg} kg ${r.remarks ? '• ' + PoultryApp.escapeHtml(r.remarks) : ''}</div>
+                    </div>
+                    <div class="text-end">
+                        <div class="fs-5 fw-bold text-dark">${r.quantityIssuedKg} kg</div>
+                        <small class="text-success fw-bold">Cost: ₹${Number(r.totalFeedCostInr).toLocaleString("en-IN")}</small>
+                    </div>
+                </div>
+            `).join("");
+        }
+    </script>
+</body>
+</html>

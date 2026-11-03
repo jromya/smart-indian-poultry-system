@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wholesale Live Bird Dispatch - Smart Indian Poultry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div id="appNavbarMount"></div>
+
+    <main class="container py-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <div>
+                <h2 class="fw-bold text-success mb-1">🚛 <span data-i18n="nav_wholesalers">Wholesale Dispatch</span></h2>
+                <p class="text-muted mb-0">Dispatch live birds in bulk from poultry batches, calculate average bird weight, transport cost, total invoice & pending mandi dues.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-success fw-bold rounded-3"
+                        onclick="PoultryApp.speakText('Select an active poultry batch and wholesale trader, enter live birds lifted, total cage weight in kilograms, selling rate per kilogram, and cash received.')">
+                    🔊 Audio Guide
+                </button>
+                <a href="/customers.html" class="btn-agri-outline text-decoration-none">🤝 Add Wholesale Buyer</a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Wholesale Dispatch Form -->
+            <div class="col-lg-5">
+                <div class="agri-card p-4">
+                    <h5 class="fw-bold text-success mb-3">📝 Record Wholesale Live Bird Lift</h5>
+                    <div id="wholesaleFormDraftBanner" class="alert alert-warning py-2 d-none">
+                        📝 Unsaved wholesale dispatch draft restored!
+                    </div>
+                    <form id="wholesaleForm">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Active Poultry Batch *</label>
+                            <select class="form-select fw-semibold" id="wsBatch" name="batchId" required></select>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-bold">Challan / Deal No *</label>
+                                <input type="text" class="form-control" id="wsDealNo" name="dealNumber" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold">Dispatch Date *</label>
+                                <input type="date" class="form-control" id="wsDate" name="dealDate" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Wholesale Buyer / Trader *</label>
+                            <select class="form-select fw-semibold" id="wsCustomer" name="customerId" required></select>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-bold">Live Birds Qty *</label>
+                                <input type="number" min="1" class="form-control" id="wsBirds" name="liveBirdQuantity" placeholder="500" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold">Total Live Weight (kg) *</label>
+                                <input type="number" step="0.01" min="0.5" class="form-control" id="wsWeight" name="totalLiveWeightKg" placeholder="1125" required>
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-bold">Selling Rate (₹ / kg) *</label>
+                                <input type="number" step="0.01" min="1" class="form-control" id="wsSellRate" name="sellingPricePerKg" placeholder="118" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold">Est. Production Cost (₹/kg)</label>
+                                <input type="number" step="0.01" min="0" class="form-control" id="wsCostRate" name="purchasePricePerKg" value="88">
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-bold">Farm Transport Cost (₹)</label>
+                                <input type="number" step="0.01" min="0" class="form-control" id="wsTransport" name="transportCostInr" value="0">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold">Cash / Bank Received (₹)</label>
+                                <input type="number" step="0.01" min="0" class="form-control" id="wsCash" name="cashReceivedInr" value="0">
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-5">
+                                <label class="form-label fw-bold">Tempo / Vehicle No</label>
+                                <input type="text" class="form-control" id="wsVehicle" name="vehicleNumber" placeholder="MH-12-PQ-4455">
+                            </div>
+                            <div class="col-7">
+                                <label class="form-label fw-bold">Remarks (Voice)</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="wsRemarks" name="remarks" placeholder="Night lifting gate weighbridge">
+                                    <button type="button" class="btn btn-outline-success" onclick="PoultryApp.startVoiceInput(this, 'wsRemarks')">🎤</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Live Calculation Preview -->
+                        <div class="p-3 rounded-4 bg-success-subtle border border-success mb-3 small">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Avg Weight per Bird:</span>
+                                <strong id="prevAvgWt">0.00 kg</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Total Wholesale Invoice:</span>
+                                <strong class="text-success fs-6" id="prevSaleTotal">₹0</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Outstanding Credit Due:</span>
+                                <strong class="text-danger" id="prevDue">₹0</strong>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-agri w-100">🚛 Confirm Wholesale Lift & Deduct Live Birds</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Wholesale Dispatch History -->
+            <div class="col-lg-7">
+                <h5 class="fw-bold text-dark mb-3">📋 Recent Wholesale Lift Challans</h5>
+                <div class="row g-3" id="wholesaleList"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/i18n.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        function fmtInr(v) {
+            return "₹" + Number(v || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+        }
+
+        function updatePreview() {
+            const birds = Number(document.getElementById("wsBirds").value || 0);
+            const wt = Number(document.getElementById("wsWeight").value || 0);
+            const rate = Number(document.getElementById("wsSellRate").value || 0);
+            const cash = Number(document.getElementById("wsCash").value || 0);
+
+            const avg = birds > 0 ? (wt / birds) : 0;
+            const total = wt * rate;
+            const due = Math.max(0, total - cash);
+
+            document.getElementById("prevAvgWt").textContent = avg.toFixed(2) + " kg";
+            document.getElementById("prevSaleTotal").textContent = fmtInr(total);
+            document.getElementById("prevDue").textContent = fmtInr(due);
+        }
+
+        async function loadDropdowns() {
+            const [batchesRes, custRes] = await Promise.all([
+                PoultryApp.apiFetch("/api/batches"),
+                PoultryApp.apiFetch("/api/customers")
+            ]);
+            const activeBatches = (batchesRes.data || []).filter(b => b.status === "ACTIVE");
+            document.getElementById("wsBatch").innerHTML = activeBatches.length
+                ? activeBatches.map(b => `<option value="${b.id}">${PoultryApp.escapeHtml(b.batchCode)} - ${PoultryApp.escapeHtml(b.breedName)} (Live: ${b.currentLiveBirds})</option>`).join("")
+                : `<option value="">No active batches</option>`;
+
+            const buyers = custRes.data || [];
+            document.getElementById("wsCustomer").innerHTML = buyers.length
+                ? buyers.map(c => `<option value="${c.id}">${PoultryApp.escapeHtml(c.customerName)} (${PoultryApp.escapeHtml(c.buyerCategory)})</option>`).join("")
+                : `<option value="">Add a customer first</option>`;
+        }
+
+        async function loadDeals() {
+            const res = await PoultryApp.apiFetch("/api/wholesalers");
+            const deals = res.data || [];
+            const box = document.getElementById("wholesaleList");
+            if (!deals.length) {
+                box.innerHTML = `<div class="col-12"><div class="agri-card p-4 text-center text-muted">No wholesale dispatches recorded yet.</div></div>`;
+                return;
+            }
+            box.innerHTML = deals.map(d => {
+                const due = Number(d.outstandingPaymentInr || 0);
+                return `
+                <div class="col-12">
+                    <div class="agri-card p-3">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                            <div>
+                                <span class="badge bg-success me-1">#${PoultryApp.escapeHtml(d.dealNumber)}</span>
+                                <strong>${PoultryApp.escapeHtml(d.customerName)}</strong>
+                                <span class="text-muted small ms-2">📅 ${PoultryApp.escapeHtml(d.dealDate)}</span>
+                            </div>
+                            <span class="badge ${due > 0 ? 'bg-danger' : 'bg-success'}">${PoultryApp.escapeHtml(d.paymentStatus)}</span>
+                        </div>
+                        <div class="row g-2 small text-center bg-light rounded-3 p-2">
+                            <div class="col-3">
+                                <div class="text-muted">Batch</div>
+                                <div class="fw-bold">${PoultryApp.escapeHtml(d.batchCode)}</div>
+                            </div>
+                            <div class="col-3">
+                                <div class="text-muted">Birds Lifted</div>
+                                <div class="fw-bold">${d.liveBirdQuantity} (${d.averageWeightKg} kg avg)</div>
+                            </div>
+                            <div class="col-3">
+                                <div class="text-muted">Total Weight</div>
+                                <div class="fw-bold">${d.totalLiveWeightKg} kg @ ₹${d.sellingPricePerKg}</div>
+                            </div>
+                            <div class="col-3">
+                                <div class="text-muted">Invoice / Pending</div>
+                                <div class="fw-bold text-success">${fmtInr(d.totalSaleAmountInr)}</div>
+                                ${due > 0 ? `<div class="text-danger fw-bold">Due: ${fmtInr(due)}</div>` : ""}
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join("");
+        }
+
+        (async function init() {
+            const user = await PoultryApp.requireAuth(["SUPER_ADMIN", "FARM_ADMIN", "FARM_MANAGER"]);
+            if (!user) return;
+            PoultryApp.renderProtectedShell("wholesalers");
+
+            document.getElementById("wsDate").value = new Date().toISOString().split("T")[0];
+            document.getElementById("wsDealNo").value = "WD-" + Math.floor(1000 + Math.random() * 9000);
+
+            ["wsBirds", "wsWeight", "wsSellRate", "wsCash"].forEach(id => {
+                document.getElementById(id).addEventListener("input", updatePreview);
+            });
+
+            await loadDropdowns();
+            await loadDeals();
+            PoultryApp.bindOfflineDraft("wholesaleForm", "draft_wholesale_phase4");
+            updatePreview();
+
+            document.getElementById("wholesaleForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                try {
+                    const payload = {
+                        batchId: document.getElementById("wsBatch").value,
+                        dealNumber: document.getElementById("wsDealNo").value,
+                        dealDate: document.getElementById("wsDate").value,
+                        customerId: document.getElementById("wsCustomer").value,
+                        liveBirdQuantity: Number(document.getElementById("wsBirds").value),
+                        totalLiveWeightKg: Number(document.getElementById("wsWeight").value),
+                        purchasePricePerKg: Number(document.getElementById("wsCostRate").value || 0),
+                        transportCostInr: Number(document.getElementById("wsTransport").value || 0),
+                        sellingPricePerKg: Number(document.getElementById("wsSellRate").value),
+                        cashReceivedInr: Number(document.getElementById("wsCash").value || 0),
+                        vehicleNumber: document.getElementById("wsVehicle").value,
+                        remarks: document.getElementById("wsRemarks").value
+                    };
+                    await PoultryApp.apiFetch("/api/wholesalers", {
+                        method: "POST",
+                        body: JSON.stringify(payload)
+                    });
+                    PoultryApp.clearOfflineDraft("wholesaleForm", "draft_wholesale_phase4");
+                    PoultryApp.showToast("Wholesale dispatch recorded & batch live birds updated!", "success");
+                    e.target.reset();
+                    document.getElementById("wsDate").value = new Date().toISOString().split("T")[0];
+                    document.getElementById("wsDealNo").value = "WD-" + Math.floor(1000 + Math.random() * 9000);
+                    updatePreview();
+                    await loadDropdowns();
+                    await loadDeals();
+                } catch (err) {
+                    PoultryApp.showToast(err.message, "danger");
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

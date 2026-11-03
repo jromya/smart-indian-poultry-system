@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customers & Buyers - Smart Indian Poultry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div id="appNavbarMount"></div>
+
+    <main class="container py-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <div>
+                <h2 class="fw-bold text-success mb-1">🤝 <span data-i18n="nav_customers">Customers & Buyers</span></h2>
+                <p class="text-muted mb-0">Manage Wholesalers, Chicken Retailers, Meat Shops, Egg Retailers & Direct Customers with live outstanding receivables.</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-outline-success fw-bold rounded-3"
+                        onclick="PoultryApp.speakText('Add wholesale traders, chicken retailers, cutting shops, egg dealers or direct buyers and track their outstanding credit balance.')">
+                    🔊 Audio Help
+                </button>
+                <a href="/payments.html" class="btn-agri-outline text-decoration-none">💳 Collect Pending Dues</a>
+                <button type="button" class="btn-agri" data-bs-toggle="modal" data-bs-target="#customerModal">
+                    ➕ Add Customer / Buyer
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary KPI Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3">
+                <div class="agri-card p-3 h-100 border-start border-4 border-success">
+                    <div class="text-muted small fw-bold">TOTAL BUYERS</div>
+                    <div class="fs-3 fw-bold text-success" id="kpiTotalCustomers">0</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="agri-card p-3 h-100 border-start border-4 border-primary">
+                    <div class="text-muted small fw-bold">TOTAL BILLED SALES</div>
+                    <div class="fs-4 fw-bold text-primary" id="kpiTotalBilled">₹0</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="agri-card p-3 h-100 border-start border-4 border-info">
+                    <div class="text-muted small fw-bold">CASH RECEIVED</div>
+                    <div class="fs-4 fw-bold text-dark" id="kpiTotalReceived">₹0</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="agri-card p-3 h-100 border-start border-4 border-danger">
+                    <div class="text-muted small fw-bold">OUTSTANDING RECEIVABLES</div>
+                    <div class="fs-4 fw-bold text-danger" id="kpiTotalOutstanding">₹0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Filter -->
+        <div class="agri-card p-3 mb-4">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-5">
+                    <select class="form-select fw-semibold" id="filterCategory">
+                        <option value="ALL">All 5 Buyer Categories</option>
+                        <option value="WHOLESALER">🚛 Wholesalers</option>
+                        <option value="CHICKEN_RETAILER">🏪 Chicken Retailers</option>
+                        <option value="MEAT_SHOP">🔪 Meat / Cutting Shops</option>
+                        <option value="EGG_RETAILER">🥚 Egg Retailers</option>
+                        <option value="DIRECT_CUSTOMER">🏠 Direct Customers / Hotels</option>
+                    </select>
+                </div>
+                <div class="col-md-7">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="searchBuyerInput" placeholder="Search buyer name, code, city or mobile...">
+                        <button type="button" class="btn btn-outline-success" onclick="PoultryApp.startVoiceInput(this, 'searchBuyerInput')">🎤</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3" id="customersGrid"></div>
+    </main>
+
+    <!-- Add Customer Modal -->
+    <div class="modal fade" id="customerModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <form class="modal-content rounded-4" id="customerForm">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold">🤝 Register New Buyer / Customer</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="customerFormDraftBanner" class="alert alert-warning py-2 d-none">
+                        📝 Restored unsaved buyer draft from your device!
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6" id="farmSelectWrap">
+                            <label class="form-label fw-bold">Farm *</label>
+                            <select class="form-select" id="custFarm" name="farmId"></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Buyer Category *</label>
+                            <select class="form-select fw-semibold" id="custCategory" name="buyerCategory" required>
+                                <option value="WHOLESALER">WHOLESALER (Live Bird Mandi / Trader)</option>
+                                <option value="CHICKEN_RETAILER">CHICKEN_RETAILER (Retail Bird Seller)</option>
+                                <option value="MEAT_SHOP">MEAT_SHOP (Chicken Cutting Shop)</option>
+                                <option value="EGG_RETAILER">EGG_RETAILER (Egg Wholesale / Kirana)</option>
+                                <option value="DIRECT_CUSTOMER">DIRECT_CUSTOMER (Hotel / Household)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Customer Code *</label>
+                            <input type="text" class="form-control" id="custCode" name="customerCode" placeholder="CUST-MH-105" required>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold">Buyer / Business Name * (Voice Supported)</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="custName" name="customerName" placeholder="Deccan Poultry Traders" required>
+                                <button type="button" class="btn btn-outline-success" onclick="PoultryApp.startVoiceInput(this, 'custName')">🎤</button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Mobile Number *</label>
+                            <input type="text" class="form-control" id="custPhone" name="phone" placeholder="9822098765" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">GSTIN (Optional)</label>
+                            <input type="text" class="form-control" id="custGst" name="gstNumber" placeholder="27AAAAA0000A1Z5">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">City / Market</label>
+                            <input type="text" class="form-control" id="custCity" name="city" placeholder="Pune">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">State</label>
+                            <input type="text" class="form-control" id="custState" name="state" value="Maharashtra">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Address / Credit Notes (Voice Supported)</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="custNotes" name="notes" placeholder="Market Yard Gate 2, weekly NEFT settlement">
+                                <button type="button" class="btn btn-outline-success" onclick="PoultryApp.startVoiceInput(this, 'custNotes')">🎤</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-agri w-100">✅ Save Customer / Buyer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/i18n.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let allCustomers = [];
+
+        function formatInr(v) {
+            return "₹" + Number(v || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+        }
+
+        function renderCustomers() {
+            const catFilter = document.getElementById("filterCategory").value;
+            const q = (document.getElementById("searchBuyerInput").value || "").toLowerCase().trim();
+
+            const filtered = allCustomers.filter(c => {
+                if (catFilter !== "ALL" && c.buyerCategory !== catFilter) return false;
+                if (!q) return true;
+                const hay = `${c.customerCode} ${c.customerName} ${c.city || ""} ${c.phone || ""}`.toLowerCase();
+                return hay.includes(q);
+            });
+
+            document.getElementById("kpiTotalCustomers").textContent = filtered.length;
+            const totBilled = filtered.reduce((s, c) => s + (c.totalBilledAmount || 0), 0);
+            const totRec = filtered.reduce((s, c) => s + (c.totalReceivedAmount || 0), 0);
+            const totOut = filtered.reduce((s, c) => s + (c.outstandingBalance || 0), 0);
+            document.getElementById("kpiTotalBilled").textContent = formatInr(totBilled);
+            document.getElementById("kpiTotalReceived").textContent = formatInr(totRec);
+            document.getElementById("kpiTotalOutstanding").textContent = formatInr(totOut);
+
+            const grid = document.getElementById("customersGrid");
+            if (!filtered.length) {
+                grid.innerHTML = `<div class="col-12"><div class="agri-card p-4 text-center text-muted">No buyers match your filter. Click <b>Add Customer / Buyer</b> to register one.</div></div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(c => {
+                const due = Number(c.outstandingBalance || 0);
+                const badgeCls = due > 0 ? "bg-danger" : "bg-success";
+                return `
+                <div class="col-md-6 col-xl-4">
+                    <div class="agri-card p-3 h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge bg-success-subtle text-success border border-success fw-bold">${PoultryApp.escapeHtml(c.buyerCategory)}</span>
+                                <span class="badge ${badgeCls}">${due > 0 ? "Due: " + formatInr(due) : "Settled"}</span>
+                            </div>
+                            <h5 class="fw-bold mb-1">${PoultryApp.escapeHtml(c.customerName)}</h5>
+                            <div class="small text-muted mb-2">
+                                Code: <b>${PoultryApp.escapeHtml(c.customerCode)}</b> • 📞 ${PoultryApp.escapeHtml(c.phone)}
+                                ${c.city ? ` • 📍 ${PoultryApp.escapeHtml(c.city)}` : ""}
+                            </div>
+                            ${c.notes ? `<div class="small bg-light rounded-3 p-2 mb-2">${PoultryApp.escapeHtml(c.notes)}</div>` : ""}
+                        </div>
+                        <div class="border-top pt-2 mt-2 row text-center g-1 small">
+                            <div class="col-4">
+                                <div class="text-muted">Billed</div>
+                                <div class="fw-bold">${formatInr(c.totalBilledAmount)}</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-muted">Received</div>
+                                <div class="fw-bold text-success">${formatInr(c.totalReceivedAmount)}</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-muted">Pending</div>
+                                <div class="fw-bold ${due > 0 ? 'text-danger' : 'text-muted'}">${formatInr(due)}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join("");
+        }
+
+        async function loadCustomers() {
+            const res = await PoultryApp.apiFetch("/api/customers");
+            allCustomers = res.data || [];
+            renderCustomers();
+        }
+
+        (async function init() {
+            const user = await PoultryApp.requireAuth(["SUPER_ADMIN", "FARM_ADMIN", "FARM_MANAGER", "RETAILER", "CHICKEN_SHOP_OWNER"]);
+            if (!user) return;
+            PoultryApp.renderProtectedShell("customers");
+
+            const isNonFarm = ["RETAILER", "CHICKEN_SHOP_OWNER"].includes(user.role);
+            if (isNonFarm) {
+                document.getElementById("farmSelectWrap").classList.add("d-none");
+            } else {
+                const farmsRes = await PoultryApp.apiFetch("/api/farms");
+                document.getElementById("custFarm").innerHTML = (farmsRes.data || [])
+                    .map(f => `<option value="${f.id}">${PoultryApp.escapeHtml(f.farmName)}</option>`).join("");
+            }
+
+            document.getElementById("custCode").value = "CUST-" + Math.floor(1000 + Math.random() * 9000);
+            PoultryApp.bindOfflineDraft("customerForm", "draft_customer_phase4");
+
+            document.getElementById("filterCategory").addEventListener("change", renderCustomers);
+            document.getElementById("searchBuyerInput").addEventListener("input", renderCustomers);
+
+            await loadCustomers();
+
+            document.getElementById("customerForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                try {
+                    const body = {
+                        farmId: isNonFarm ? null : document.getElementById("custFarm").value,
+                        customerCode: document.getElementById("custCode").value,
+                        customerName: document.getElementById("custName").value,
+                        buyerCategory: document.getElementById("custCategory").value,
+                        phone: document.getElementById("custPhone").value,
+                        gstNumber: document.getElementById("custGst").value,
+                        city: document.getElementById("custCity").value,
+                        state: document.getElementById("custState").value,
+                        notes: document.getElementById("custNotes").value
+                    };
+                    await PoultryApp.apiFetch("/api/customers", {
+                        method: "POST",
+                        body: JSON.stringify(body)
+                    });
+                    PoultryApp.clearOfflineDraft("customerForm", "draft_customer_phase4");
+                    bootstrap.Modal.getInstance(document.getElementById("customerModal")).hide();
+                    e.target.reset();
+                    document.getElementById("custCode").value = "CUST-" + Math.floor(1000 + Math.random() * 9000);
+                    PoultryApp.showToast("Buyer registered successfully!", "success");
+                    await loadCustomers();
+                } catch (err) {
+                    PoultryApp.showToast(err.message, "danger");
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

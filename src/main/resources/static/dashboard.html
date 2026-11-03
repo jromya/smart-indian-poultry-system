@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Smart Indian Poultry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div id="appNavbarMount"></div>
+
+    <main class="container py-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <div>
+                <h2 class="fw-bold text-success mb-1">📊 <span data-i18n="nav_dashboard">Dashboard</span></h2>
+                <p class="text-muted mb-0" id="welcomeSubtitle">Loading your live poultry farm summary...</p>
+            </div>
+            <button type="button" class="btn-agri-outline" onclick="PoultryApp.speakText('audio_dashboard_help')">
+                🔊 <span data-i18n="btn_listen_help">Listen Audio Guide</span>
+            </button>
+        </div>
+
+        <!-- Live Low-Stock, Expiry & Vaccination Alerts Strip -->
+        <div id="alertsBannerSection" class="agri-card p-3 mb-4 border-warning d-none" style="background:#fffdf5;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold text-danger mb-0">🔔 Active Low-Stock, Medicine Expiry & Vaccination Alerts (<span id="alertCountBadge">0</span>)</h6>
+                <a href="/inventory.html" class="btn btn-sm btn-outline-success fw-semibold">Manage Store & Alerts →</a>
+            </div>
+            <div id="activeAlertsList" class="row g-2"></div>
+        </div>
+
+        <!-- Live Poultry KPI Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3">
+                <div class="agri-card p-3 h-100 d-flex align-items-center gap-3">
+                    <div class="stat-card-icon">🐣</div>
+                    <div>
+                        <div class="text-muted small fw-semibold">Active Batches</div>
+                        <div class="fs-2 fw-bold text-success" id="statActiveBatches">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="agri-card p-3 h-100 d-flex align-items-center gap-3">
+                    <div class="stat-card-icon">🐔</div>
+                    <div>
+                        <div class="text-muted small fw-semibold">Current Live Birds</div>
+                        <div class="fs-2 fw-bold text-success" id="statLiveBirds">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="agri-card p-3 h-100 d-flex align-items-center gap-3">
+                    <div class="stat-card-icon">🥚</div>
+                    <div>
+                        <div class="text-muted small fw-semibold">Good Egg Stock</div>
+                        <div class="fs-2 fw-bold text-success" id="statEggStock">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="agri-card p-3 h-100 d-flex align-items-center gap-3">
+                    <div class="stat-card-icon">📦</div>
+                    <div>
+                        <div class="text-muted small fw-semibold">Inventory Valuation</div>
+                        <div class="fs-4 fw-bold text-success" id="statInvValuation">₹0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Large Farmer-Friendly Action Buttons -->
+        <div class="agri-card p-4 mb-4">
+            <h5 class="fw-bold text-success mb-3">⚡ <span data-i18n="quick_actions">Quick Actions</span></h5>
+            <div class="row g-3" id="quickActionButtons"></div>
+        </div>
+
+        <!-- Breed Chart & Recent Activity Cards -->
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="agri-card p-4 h-100">
+                    <h5 class="fw-bold text-success mb-3">🐔 Indian & Commercial Breed Master</h5>
+                    <div style="max-height: 260px; display:flex; justify-content:center;">
+                        <canvas id="breedCategoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="agri-card p-4 h-100">
+                    <h5 class="fw-bold text-success mb-3">🛡️ <span data-i18n="recent_activity">Recent Security & Farm Activity</span></h5>
+                    <div id="auditCardsList" class="d-grid gap-2"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="/js/i18n.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        (async function initDashboard() {
+            const user = await PoultryApp.requireAuth();
+            if (!user) return;
+            PoultryApp.renderProtectedShell("dashboard");
+            document.getElementById("welcomeSubtitle").textContent =
+                `${user.fullName} • ${user.roleDisplayName} ${user.district ? '• ' + user.district + ', ' + user.state : ''}`;
+
+            const actionsEl = document.getElementById("quickActionButtons");
+            const actions = [];
+            if (["SUPER_ADMIN", "FARM_ADMIN", "FARM_MANAGER", "FARMER"].includes(user.role)) {
+                actions.push({ href: "/daily-records.html", icon: "📝", key: "nav_daily_records", label: t("nav_daily_records") });
+                actions.push({ href: "/feed-management.html", icon: "🌾", key: "nav_feed", label: t("nav_feed") });
+                actions.push({ href: "/medicine.html", icon: "💊", key: "nav_medicine", label: t("nav_medicine") });
+                actions.push({ href: "/vaccination.html", icon: "💉", key: "nav_vaccination", label: t("nav_vaccination") });
+                actions.push({ href: "/inventory.html", icon: "📦", key: "nav_inventory", label: t("nav_inventory") });
+                actions.push({ href: "/batches.html", icon: "🐣", key: "nav_batches", label: t("nav_batches") });
+                actions.push({ href: "/broiler-management.html", icon: "🍗", key: "nav_broiler", label: t("nav_broiler") });
+                actions.push({ href: "/layer-management.html", icon: "🥚", key: "nav_layer", label: t("nav_layer") });
+            }
+            if (["SUPER_ADMIN", "FARM_ADMIN", "FARM_MANAGER"].includes(user.role)) {
+                actions.push({ href: "/wholesalers.html", icon: "🚛", key: "nav_wholesalers", label: t("nav_wholesalers") });
+                actions.push({ href: "/sales.html", icon: "💰", key: "nav_sales", label: t("nav_sales") });
+                actions.push({ href: "/expenses.html", icon: "📉", key: "nav_expenses", label: t("nav_expenses") });
+                actions.push({ href: "/payments.html", icon: "💳", key: "nav_payments", label: t("nav_payments") });
+                actions.push({ href: "/purchases.html", icon: "🧾", key: "nav_purchases", label: t("nav_purchases") });
+                actions.push({ href: "/customers.html", icon: "🤝", key: "nav_customers", label: t("nav_customers") });
+            }
+            if (user.role === "RETAILER") {
+                actions.push({ href: "/retailers.html", icon: "🏪", key: "nav_retailers", label: t("nav_retailers") });
+                actions.push({ href: "/sales.html", icon: "💰", key: "nav_sales", label: t("nav_sales") });
+                actions.push({ href: "/customers.html", icon: "🤝", key: "nav_customers", label: t("nav_customers") });
+                actions.push({ href: "/expenses.html", icon: "📉", key: "nav_expenses", label: t("nav_expenses") });
+            }
+            if (user.role === "CHICKEN_SHOP_OWNER") {
+                actions.push({ href: "/chicken-shop.html", icon: "🔪", key: "nav_chicken_shop", label: t("nav_chicken_shop") });
+                actions.push({ href: "/sales.html", icon: "💰", key: "nav_sales", label: t("nav_sales") });
+                actions.push({ href: "/customers.html", icon: "🤝", key: "nav_customers", label: t("nav_customers") });
+                actions.push({ href: "/expenses.html", icon: "📉", key: "nav_expenses", label: t("nav_expenses") });
+            }
+            actions.push({ href: "/breeds.html", icon: "🐔", key: "nav_breeds", label: t("nav_breeds") });
+            if (["SUPER_ADMIN", "FARM_ADMIN"].includes(user.role)) {
+                actions.push({ href: "/users.html", icon: "👥", key: "nav_users", label: t("nav_users") });
+            }
+
+            actionsEl.innerHTML = actions.map(a => `
+                <div class="col-6 col-md-4 col-lg-3">
+                    <a href="${a.href}" class="btn-agri w-100 text-decoration-none py-3">
+                        <span class="fs-4">${a.icon}</span> <span data-i18n="${a.key}">${a.label}</span>
+                    </a>
+                </div>
+            `).join("");
+            applyPageTranslations();
+
+            try {
+                const res = await PoultryApp.apiFetch("/api/dashboard/summary");
+                const d = res.data;
+                document.getElementById("statActiveBatches").textContent = d.activeBatches || 0;
+                document.getElementById("statLiveBirds").textContent = Number(d.totalLiveBirds || 0).toLocaleString("en-IN");
+                document.getElementById("statEggStock").textContent = Number(d.totalEggStockGood || 0).toLocaleString("en-IN");
+                document.getElementById("statInvValuation").textContent = "₹" + Number(d.inventoryValuationInr || 0).toLocaleString("en-IN");
+
+                const alerts = d.activeAlerts || [];
+                if (alerts.length > 0) {
+                    document.getElementById("alertsBannerSection").classList.remove("d-none");
+                    document.getElementById("alertCountBadge").textContent = alerts.length;
+                    document.getElementById("activeAlertsList").innerHTML = alerts.slice(0, 4).map(al => `
+                        <div class="col-md-6">
+                            <div class="p-2 px-3 rounded-3 border ${al.severity === 'CRITICAL' ? 'border-danger bg-danger bg-opacity-10' : 'border-warning bg-warning bg-opacity-10'}">
+                                <div class="fw-bold ${al.severity === 'CRITICAL' ? 'text-danger' : 'text-dark'}">
+                                    ${al.severity === 'CRITICAL' ? '🚨' : '⚠️'} ${PoultryApp.escapeHtml(al.title)}
+                                </div>
+                                <div class="small text-muted">${PoultryApp.escapeHtml(al.message)}</div>
+                            </div>
+                        </div>
+                    `).join("");
+                }
+
+                new Chart(document.getElementById("breedCategoryChart"), {
+                    type: "doughnut",
+                    data: {
+                        labels: ["Indigenous Indian (8)", "Improved Rural (4)", "Commercial (4)"],
+                        datasets: [{
+                            data: [d.indigenousBreeds, d.improvedRuralBreeds, d.commercialBreeds],
+                            backgroundColor: ["#ef6c00", "#2e7d32", "#1565c0"],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: { plugins: { legend: { position: "bottom" } } }
+                });
+
+                const logs = d.recentAuditLogs || [];
+                const auditEl = document.getElementById("auditCardsList");
+                if (logs.length === 0) {
+                    auditEl.innerHTML = `<div class="p-3 rounded-3 bg-light text-muted">Role mode active (${PoultryApp.escapeHtml(d.roleDisplayName)}).</div>`;
+                } else {
+                    auditEl.innerHTML = logs.slice(0, 6).map(item => `
+                        <div class="p-3 rounded-3 border bg-light d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <span class="badge bg-success me-2">${PoultryApp.escapeHtml(item.action)}</span>
+                                <span class="fw-semibold">${PoultryApp.escapeHtml(item.summary)}</span>
+                            </div>
+                            <small class="text-muted">${PoultryApp.escapeHtml(item.username)} • ${new Date(item.timestamp).toLocaleString("en-IN")}</small>
+                        </div>
+                    `).join("");
+                }
+            } catch (err) {
+                PoultryApp.showToast(err.message, "danger");
+            }
+        })();
+    </script>
+</body>
+</html>

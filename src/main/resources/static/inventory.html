@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory & Stock Movements - Smart Indian Poultry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div id="appNavbarMount"></div>
+
+    <main class="container py-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <div>
+                <h2 class="fw-bold text-success mb-1">📦 <span data-i18n="nav_inventory">Inventory & Stock</span></h2>
+                <p class="text-muted mb-0">Manage Feed, Medicine, Vaccines, Equipment, Packaging & Supplies with live valuation and stock movement audit history.</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn-agri-outline" onclick="PoultryApp.speakText('audio_inventory_help')">
+                    🔊 <span data-i18n="btn_listen_help">Listen Audio Guide</span>
+                </button>
+                <button type="button" class="btn-agri" id="btnNewItem" data-bs-toggle="modal" data-bs-target="#newItemModal">
+                    ➕ Add Stock Item
+                </button>
+                <button type="button" class="btn-agri-outline" data-bs-toggle="modal" data-bs-target="#issueModal">
+                    📤 Issue Supply
+                </button>
+                <button type="button" class="btn-agri-outline" id="btnAdjustStock" data-bs-toggle="modal" data-bs-target="#adjustModal">
+                    ⚖️ Adjust Stock
+                </button>
+                <button type="button" class="btn-agri-outline" id="btnTransferStock" data-bs-toggle="modal" data-bs-target="#transferModal">
+                    🔄 Inter-Farm Transfer
+                </button>
+            </div>
+        </div>
+
+        <!-- Valuation & Alert KPI Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3">
+                <div class="agri-card p-3 h-100">
+                    <div class="text-muted small fw-semibold">Total Inventory Valuation</div>
+                    <div class="fs-3 fw-bold text-success" id="kpiTotalValuation">₹0</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="agri-card p-3 h-100">
+                    <div class="text-muted small fw-semibold">Total Tracked SKUs</div>
+                    <div class="fs-3 fw-bold text-dark" id="kpiTotalItems">0</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="agri-card p-3 h-100 border-warning">
+                    <div class="text-muted small fw-semibold">Low-Stock Items</div>
+                    <div class="fs-3 fw-bold text-danger" id="kpiLowStock">0</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="agri-card p-3 h-100 border-danger">
+                    <div class="text-muted small fw-semibold">Expiring (≤30d) / Expired</div>
+                    <div class="fs-3 fw-bold text-danger" id="kpiExpiring">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Notifications / Alerts Panel -->
+        <div id="alertsPanel" class="agri-card p-3 mb-4 d-none" style="background:#fffdf4;">
+            <h6 class="fw-bold text-danger mb-2">🔔 Active Low-Stock, Expiry & Vaccine Alerts</h6>
+            <div id="alertsContainer" class="row g-2"></div>
+        </div>
+
+        <!-- Category Filter Pills -->
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <button class="btn btn-success rounded-pill px-3 cat-btn" onclick="setCatFilter('ALL', this)">All Categories</button>
+            <button class="btn btn-outline-success rounded-pill px-3 cat-btn" onclick="setCatFilter('FEED', this)">🌾 Feed</button>
+            <button class="btn btn-outline-success rounded-pill px-3 cat-btn" onclick="setCatFilter('MEDICINE', this)">💊 Medicine</button>
+            <button class="btn btn-outline-success rounded-pill px-3 cat-btn" onclick="setCatFilter('VACCINE', this)">💉 Vaccines</button>
+            <button class="btn btn-outline-success rounded-pill px-3 cat-btn" onclick="setCatFilter('EQUIPMENT', this)">🛠️ Equipment</button>
+            <button class="btn btn-outline-success rounded-pill px-3 cat-btn" onclick="setCatFilter('PACKAGING', this)">📦 Packaging</button>
+            <button class="btn btn-outline-success rounded-pill px-3 cat-btn" onclick="setCatFilter('OTHER', this)">🧹 Other Supplies</button>
+        </div>
+
+        <!-- Inventory Cards Grid -->
+        <div class="row g-3 mb-4" id="inventoryGrid"></div>
+
+        <!-- Valuation Breakdown Chart + Stock Movement History -->
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="agri-card p-4 h-100">
+                    <h5 class="fw-bold text-success mb-3">💰 Category Valuation (₹)</h5>
+                    <div style="max-height:260px; display:flex; justify-content:center;">
+                        <canvas id="valuationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-8">
+                <div class="agri-card p-4 h-100">
+                    <h5 class="fw-bold text-success mb-3">📜 Stock Movement History (Every Change Logged)</h5>
+                    <div id="movementsList" class="d-grid gap-2" style="max-height:360px; overflow-y:auto;"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 1. Add New Inventory Item Modal -->
+    <div class="modal fade" id="newItemModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <form class="modal-content rounded-4" id="newItemForm">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold">➕ Add New Inventory SKU</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Farm *</label>
+                            <select class="form-select" id="niFarm" required></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Item Code *</label>
+                            <input type="text" class="form-control" id="niCode" placeholder="e.g. FEED-GROWER-01" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Item Name *</label>
+                            <input type="text" class="form-control" id="niName" placeholder="Broiler Grower Crumbs" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Category *</label>
+                            <select class="form-select" id="niCat">
+                                <option value="FEED">FEED</option>
+                                <option value="MEDICINE">MEDICINE</option>
+                                <option value="VACCINE">VACCINE</option>
+                                <option value="EQUIPMENT">EQUIPMENT</option>
+                                <option value="PACKAGING">PACKAGING</option>
+                                <option value="OTHER">OTHER</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Sub-Category</label>
+                            <input type="text" class="form-control" id="niSubCat" placeholder="GROWER">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Unit *</label>
+                            <select class="form-select" id="niUnit">
+                                <option value="KG">KG</option>
+                                <option value="LITERS">LITERS</option>
+                                <option value="DOSES">DOSES</option>
+                                <option value="PIECES">PIECES</option>
+                                <option value="TRAYS">TRAYS</option>
+                                <option value="BAGS">BAGS</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Opening Stock *</label>
+                            <input type="number" step="0.1" min="0" class="form-control" id="niStock" value="0" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Reorder Alert Level *</label>
+                            <input type="number" step="0.1" min="0" class="form-control" id="niReorder" value="50" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Unit Cost (₹) *</label>
+                            <input type="number" step="0.01" min="0" class="form-control" id="niCost" value="40" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Batch / Lot Number</label>
+                            <input type="text" class="form-control" id="niLot" placeholder="LOT-2026">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Expiry Date (Optional)</label>
+                            <input type="date" class="form-control" id="niExpiry">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Storage Location</label>
+                            <input type="text" class="form-control" id="niLoc" placeholder="Main Store Bay 1">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-agri w-100">Save Inventory Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. Issue Supply Modal -->
+    <div class="modal fade" id="issueModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form class="modal-content rounded-4" id="issueForm">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold">📤 Issue Equipment / Packaging / Supply</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Inventory Item *</label>
+                        <select class="form-select" id="issItem" required></select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Allocate to Batch (Optional)</label>
+                        <select class="form-select" id="issBatch"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Quantity to Issue *</label>
+                        <input type="number" step="0.1" min="0.1" class="form-control" id="issQty" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold">Remarks</label>
+                        <input type="text" class="form-control" id="issRemarks" placeholder="Issued egg trays / shed lime">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-agri w-100">Issue & Deduct Stock</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. Stock Adjustment Modal -->
+    <div class="modal fade" id="adjustModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form class="modal-content rounded-4" id="adjustForm">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold">⚖️ Physical Stock Adjustment</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Inventory Item *</label>
+                        <select class="form-select" id="adjItem" required></select>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold">Action *</label>
+                            <select class="form-select" id="adjType">
+                                <option value="ADD">➕ ADD Stock</option>
+                                <option value="DEDUCT">➖ DEDUCT (Spillage/Damage)</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold">Quantity *</label>
+                            <input type="number" step="0.1" min="0.1" class="form-control" id="adjQty" required>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold">Mandatory Audit Reason *</label>
+                        <input type="text" class="form-control" id="adjReason" placeholder="Monthly physical stock-take reconciliation" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-agri w-100">Record Stock Adjustment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4. Inter-Farm Stock Transfer Modal -->
+    <div class="modal fade" id="transferModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form class="modal-content rounded-4" id="transferForm">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold">🔄 Inter-Farm Stock Transfer</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Source Item *</label>
+                        <select class="form-select" id="trSourceItem" required></select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Destination Farm *</label>
+                        <select class="form-select" id="trDestFarm" required></select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Quantity to Transfer *</label>
+                        <input type="number" step="0.1" min="0.1" class="form-control" id="trQty" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold">Remarks</label>
+                        <input type="text" class="form-control" id="trRemarks" placeholder="Emergency feed/medicine transfer">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-agri w-100">Execute Farm Transfer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="/js/i18n.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let allItems = [];
+        let selectedCategory = "ALL";
+        let valChart = null;
+
+        (async function init() {
+            const user = await PoultryApp.requireAuth(["SUPER_ADMIN", "FARM_ADMIN", "FARM_MANAGER", "FARMER"]);
+            if (!user) return;
+            PoultryApp.renderProtectedShell("inventory");
+
+            if (user.role === "FARMER") {
+                document.getElementById("btnNewItem").classList.add("d-none");
+                document.getElementById("btnAdjustStock").classList.add("d-none");
+                document.getElementById("btnTransferStock").classList.add("d-none");
+            }
+
+            await loadEverything();
+            bindModalForms();
+        })();
+
+        async function loadEverything() {
+            try {
+                const [farmsRes, batchesRes, itemsRes, valRes, movRes, alertsRes] = await Promise.all([
+                    PoultryApp.apiFetch("/api/farms"),
+                    PoultryApp.apiFetch("/api/batches"),
+                    PoultryApp.apiFetch("/api/inventory"),
+                    PoultryApp.apiFetch("/api/inventory/valuation"),
+                    PoultryApp.apiFetch("/api/inventory/movements"),
+                    PoultryApp.apiFetch("/api/notifications")
+                ]);
+
+                const farms = farmsRes.data || [];
+                const batches = (batchesRes.data || []).filter(b => b.status !== "COMPLETED");
+                allItems = itemsRes.data || [];
+
+                document.getElementById("niFarm").innerHTML = farms.map(f => `<option value="${f.id}">${PoultryApp.escapeHtml(f.farmName)}</option>`).join("");
+                document.getElementById("trDestFarm").innerHTML = farms.map(f => `<option value="${f.id}">${PoultryApp.escapeHtml(f.farmName)}</option>`).join("");
+                document.getElementById("issBatch").innerHTML = `<option value="">-- General Farm Use (No specific batch) --</option>` +
+                    batches.map(b => `<option value="${b.id}">${PoultryApp.escapeHtml(b.batchCode)} (${PoultryApp.escapeHtml(b.breedName)})</option>`).join("");
+
+                const itemOpts = allItems.map(i => `<option value="${i.id}">${PoultryApp.escapeHtml(i.itemName)} [${PoultryApp.escapeHtml(i.farmName)}] — ${i.currentStock} ${i.unit}</option>`).join("");
+                document.getElementById("issItem").innerHTML = itemOpts;
+                document.getElementById("adjItem").innerHTML = itemOpts;
+                document.getElementById("trSourceItem").innerHTML = itemOpts;
+
+                const v = valRes.data || {};
+                document.getElementById("kpiTotalValuation").textContent = "₹" + Number(v.totalValuationInr || 0).toLocaleString("en-IN");
+                document.getElementById("kpiTotalItems").textContent = v.totalItemsCount || 0;
+                document.getElementById("kpiLowStock").textContent = v.lowStockItemsCount || 0;
+                document.getElementById("kpiExpiring").textContent = v.expiringSoonOrExpiredCount || 0;
+
+                renderAlerts(alertsRes.data || []);
+                renderItemsGrid();
+                renderValuationChart(v.categoryValuationInr || {});
+                renderMovements(movRes.data || []);
+            } catch (err) {
+                PoultryApp.showToast(err.message, "danger");
+            }
+        }
+
+        function setCatFilter(cat, btn) {
+            selectedCategory = cat;
+            document.querySelectorAll(".cat-btn").forEach(b => {
+                b.classList.remove("btn-success");
+                b.classList.add("btn-outline-success");
+            });
+            btn.classList.remove("btn-outline-success");
+            btn.classList.add("btn-success");
+            renderItemsGrid();
+        }
+
+        function renderAlerts(alerts) {
+            const panel = document.getElementById("alertsPanel");
+            if (alerts.length === 0) {
+                panel.classList.add("d-none");
+                return;
+            }
+            panel.classList.remove("d-none");
+            document.getElementById("alertsContainer").innerHTML = alerts.map(a => `
+                <div class="col-md-6">
+                    <div class="p-2 px-3 rounded-3 border d-flex justify-content-between align-items-center gap-2 ${a.severity === 'CRITICAL' ? 'border-danger bg-danger bg-opacity-10' : 'border-warning bg-warning bg-opacity-10'}">
+                        <div>
+                            <div class="fw-bold small">${a.severity === 'CRITICAL' ? '🚨' : '⚠️'} ${PoultryApp.escapeHtml(a.title)}</div>
+                            <div class="small text-muted">${PoultryApp.escapeHtml(a.message)}</div>
+                        </div>
+                        <button class="btn btn-sm btn-light border fw-semibold" onclick="ackAlert('${a.id}')">Dismiss</button>
+                    </div>
+                </div>
+            `).join("");
+        }
+
+        async function ackAlert(id) {
+            await PoultryApp.apiFetch(`/api/notifications/${id}/acknowledge`, { method: "PATCH" });
+            await loadEverything();
+        }
+
+        function renderItemsGrid() {
+            const filtered = selectedCategory === "ALL" ? allItems : allItems.filter(i => i.category === selectedCategory);
+            const grid = document.getElementById("inventoryGrid");
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-12"><div class="agri-card p-4 text-center text-muted">No inventory items in this category yet.</div></div>`;
+                return;
+            }
+            grid.innerHTML = filtered.map(i => {
+                const low = i.currentStock <= i.reorderLevel;
+                return `
+                <div class="col-md-6 col-lg-4">
+                    <div class="agri-card p-3 h-100 ${low ? 'border-danger border-2' : ''}">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="badge bg-success">${PoultryApp.escapeHtml(i.category)} • ${PoultryApp.escapeHtml(i.subCategory || '')}</span>
+                            ${low ? '<span class="badge bg-danger">⚠️ LOW STOCK</span>' : `<span class="badge bg-light text-dark border">${PoultryApp.escapeHtml(i.itemCode)}</span>`}
+                        </div>
+                        <h6 class="fw-bold mb-1">${PoultryApp.escapeHtml(i.itemName)}</h6>
+                        <div class="d-flex justify-content-between align-items-baseline">
+                            <div class="fs-4 fw-bold ${low ? 'text-danger' : 'text-success'}">${Number(i.currentStock).toLocaleString("en-IN")} ${PoultryApp.escapeHtml(i.unit)}</div>
+                            <div class="fw-bold text-dark">₹${Number(i.totalValuationInr).toLocaleString("en-IN")}</div>
+                        </div>
+                        <div class="small text-muted mt-1">Reorder Alert: ${i.reorderLevel} ${PoultryApp.escapeHtml(i.unit)} • Cost: ₹${i.unitCostInr}/${PoultryApp.escapeHtml(i.unit)}</div>
+                        <div class="small text-muted">📍 ${PoultryApp.escapeHtml(i.storageLocation || i.farmName)} ${i.expiryDate ? '• Exp: ' + i.expiryDate : ''}</div>
+                    </div>
+                </div>`;
+            }).join("");
+        }
+
+        function renderValuationChart(catMap) {
+            const labels = Object.keys(catMap);
+            const values = Object.values(catMap);
+            if (valChart) valChart.destroy();
+            valChart = new Chart(document.getElementById("valuationChart"), {
+                type: "doughnut",
+                data: {
+                    labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: ["#2e7d32", "#ef6c00", "#1565c0", "#6a1b9a", "#00838f", "#5d4037"]
+                    }]
+                },
+                options: { plugins: { legend: { position: "bottom" } } }
+            });
+        }
+
+        function renderMovements(list) {
+            const el = document.getElementById("movementsList");
+            if (list.length === 0) {
+                el.innerHTML = `<div class="p-3 bg-light rounded-3 text-muted">No stock movements recorded yet.</div>`;
+                return;
+            }
+            el.innerHTML = list.slice(0, 25).map(m => {
+                const isAdd = ["PURCHASE_IN", "ADJUSTMENT_ADD", "TRANSFER_IN", "OPENING_STOCK"].includes(m.movementType);
+                return `
+                <div class="p-2 px-3 rounded-3 border bg-light d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <span class="badge ${isAdd ? 'bg-success' : 'bg-warning text-dark'} me-1">${PoultryApp.escapeHtml(m.movementType)}</span>
+                        <strong>${PoultryApp.escapeHtml(m.itemName)}</strong>
+                        ${m.batchCode ? `<span class="badge bg-dark ms-1">${PoultryApp.escapeHtml(m.batchCode)}</span>` : ''}
+                        <div class="small text-muted">${PoultryApp.escapeHtml(m.remarks || '')} • By ${PoultryApp.escapeHtml(m.performedBy || 'System')}</div>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold ${isAdd ? 'text-success' : 'text-danger'}">${isAdd ? '+' : '-'}${m.quantity} ${PoultryApp.escapeHtml(m.unit)}</div>
+                        <small class="text-muted">${m.stockBefore} → <strong>${m.stockAfter}</strong></small>
+                    </div>
+                </div>`;
+            }).join("");
+        }
+
+        function bindModalForms() {
+            document.getElementById("newItemForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                try {
+                    const payload = {
+                        farmId: document.getElementById("niFarm").value,
+                        itemCode: document.getElementById("niCode").value,
+                        itemName: document.getElementById("niName").value,
+                        category: document.getElementById("niCat").value,
+                        subCategory: document.getElementById("niSubCat").value,
+                        unit: document.getElementById("niUnit").value,
+                        openingStock: parseFloat(document.getElementById("niStock").value),
+                        reorderLevel: parseFloat(document.getElementById("niReorder").value),
+                        unitCostInr: parseFloat(document.getElementById("niCost").value),
+                        batchLotNumber: document.getElementById("niLot").value,
+                        expiryDate: document.getElementById("niExpiry").value || null,
+                        storageLocation: document.getElementById("niLoc").value
+                    };
+                    await PoultryApp.apiFetch("/api/inventory", { method: "POST", body: JSON.stringify(payload) });
+                    bootstrap.Modal.getInstance(document.getElementById("newItemModal")).hide();
+                    PoultryApp.showToast("Inventory SKU added!", "success");
+                    await loadEverything();
+                } catch (err) { PoultryApp.showToast(err.message, "danger"); }
+            });
+
+            document.getElementById("issueForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                try {
+                    const payload = {
+                        inventoryItemId: document.getElementById("issItem").value,
+                        batchId: document.getElementById("issBatch").value || null,
+                        quantity: parseFloat(document.getElementById("issQty").value),
+                        remarks: document.getElementById("issRemarks").value
+                    };
+                    await PoultryApp.apiFetch("/api/inventory/issue", { method: "POST", body: JSON.stringify(payload) });
+                    bootstrap.Modal.getInstance(document.getElementById("issueModal")).hide();
+                    PoultryApp.showToast("Stock issued & movement logged!", "success");
+                    await loadEverything();
+                } catch (err) { PoultryApp.showToast(err.message, "danger"); }
+            });
+
+            document.getElementById("adjustForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                try {
+                    const payload = {
+                        inventoryItemId: document.getElementById("adjItem").value,
+                        adjustmentType: document.getElementById("adjType").value,
+                        quantity: parseFloat(document.getElementById("adjQty").value),
+                        reason: document.getElementById("adjReason").value
+                    };
+                    await PoultryApp.apiFetch("/api/inventory/adjust", { method: "POST", body: JSON.stringify(payload) });
+                    bootstrap.Modal.getInstance(document.getElementById("adjustModal")).hide();
+                    PoultryApp.showToast("Stock adjusted!", "success");
+                    await loadEverything();
+                } catch (err) { PoultryApp.showToast(err.message, "danger"); }
+            });
+
+            document.getElementById("transferForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                try {
+                    const payload = {
+                        sourceInventoryItemId: document.getElementById("trSourceItem").value,
+                        destinationFarmId: document.getElementById("trDestFarm").value,
+                        quantity: parseFloat(document.getElementById("trQty").value),
+                        remarks: document.getElementById("trRemarks").value
+                    };
+                    await PoultryApp.apiFetch("/api/inventory/transfer", { method: "POST", body: JSON.stringify(payload) });
+                    bootstrap.Modal.getInstance(document.getElementById("transferModal")).hide();
+                    PoultryApp.showToast("Stock transferred across farms!", "success");
+                    await loadEverything();
+                } catch (err) { PoultryApp.showToast(err.message, "danger"); }
+            });
+        }
+    </script>
+</body>
+</html>

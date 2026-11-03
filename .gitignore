@@ -1,0 +1,23 @@
+# Maven & Java build outputs
+target/
+*.jar
+*.war
+*.ear
+*.class
+hs_err_pid*
+
+# Local tools & local MongoDB data directory
+.tools/
+.mongodb-data/
+
+# IDEs & OS files
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Logs & local env secrets
+*.log
+.env
+.env.*

@@ -1,0 +1,223 @@
+:root {
+    --agri-green-dark: #1b5e20;
+    --agri-green-main: #2e7d32;
+    --agri-green-light: #4caf50;
+    --agri-green-pale: #e8f5e9;
+    --agri-gold: #f9a825;
+    --agri-bg: #f4f9f4;
+    --agri-card-bg: #ffffff;
+    --agri-text: #1c2b1e;
+    --agri-muted: #526655;
+    --agri-border: #cde3cf;
+}
+
+body {
+    font-family: 'Segoe UI', 'Noto Sans', 'Nirmala UI', system-ui, -apple-system, sans-serif;
+    background-color: var(--agri-bg);
+    color: var(--agri-text);
+    font-size: 16.5px;
+    line-height: 1.55;
+    min-height: 100vh;
+}
+
+/* Top Navbar */
+.agri-navbar {
+    background: linear-gradient(135deg, var(--agri-green-dark), var(--agri-green-main));
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(27, 94, 32, 0.2);
+}
+
+.agri-navbar .navbar-brand {
+    color: #fff !important;
+    font-weight: 700;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+/* Farmer-Friendly Large Touch Controls */
+.btn-agri {
+    background-color: var(--agri-green-main);
+    color: #ffffff;
+    border: none;
+    min-height: 48px;
+    padding: 0.65rem 1.3rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: transform 0.12s ease, background-color 0.15s ease;
+}
+
+.btn-agri:hover, .btn-agri:focus {
+    background-color: var(--agri-green-dark);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.btn-agri-outline {
+    background-color: #ffffff;
+    color: var(--agri-green-dark);
+    border: 2px solid var(--agri-green-main);
+    min-height: 48px;
+    padding: 0.6rem 1.2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+}
+
+.btn-agri-outline:hover {
+    background-color: var(--agri-green-pale);
+    color: var(--agri-green-dark);
+}
+
+.form-control, .form-select {
+    min-height: 48px;
+    font-size: 1.02rem;
+    border-radius: 10px;
+    border: 1.5px solid var(--agri-border);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--agri-green-main);
+    box-shadow: 0 0 0 0.22rem rgba(46, 125, 50, 0.2);
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--agri-green-dark);
+    margin-bottom: 0.35rem;
+}
+
+/* Cards */
+.agri-card {
+    background: var(--agri-card-bg);
+    border: 1.5px solid var(--agri-border);
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(27, 94, 32, 0.06);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.agri-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(27, 94, 32, 0.11);
+}
+
+.stat-card-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 14px;
+    background-color: var(--agri-green-pale);
+    color: var(--agri-green-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    flex-shrink: 0;
+}
+
+/* Navigation Pills / Sidebar Links */
+.agri-nav-pills .nav-link {
+    color: var(--agri-text);
+    font-weight: 600;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    margin-bottom: 0.35rem;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-height: 48px;
+}
+
+.agri-nav-pills .nav-link:hover {
+    background-color: var(--agri-green-pale);
+    color: var(--agri-green-dark);
+}
+
+.agri-nav-pills .nav-link.active {
+    background-color: var(--agri-green-main);
+    color: #ffffff;
+}
+
+/* Voice Mic Button */
+.voice-mic-btn {
+    border-top-right-radius: 10px !important;
+    border-bottom-right-radius: 10px !important;
+    background-color: var(--agri-green-pale);
+    border: 1.5px solid var(--agri-border);
+    color: var(--agri-green-dark);
+    min-width: 48px;
+    font-size: 1.15rem;
+}
+
+.voice-mic-btn.listening {
+    background-color: #ffebee;
+    color: #c62828;
+    animation: pulseMic 1s infinite;
+}
+
+@keyframes pulseMic {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+}
+
+/* Breed Category Badges */
+.badge-indigenous {
+    background-color: #fff3e0;
+    color: #e65100;
+    border: 1px solid #ffb74d;
+    font-size: 0.88rem;
+    padding: 0.4em 0.75em;
+}
+
+.badge-rural {
+    background-color: #e8f5e9;
+    color: #1b5e20;
+    border: 1px solid #81c784;
+    font-size: 0.88rem;
+    padding: 0.4em 0.75em;
+}
+
+.badge-commercial {
+    background-color: #e3f2fd;
+    color: #0d47a1;
+    border: 1px solid #64b5f6;
+    font-size: 0.88rem;
+    padding: 0.4em 0.75em;
+}
+
+/* Toast Alert Banner */
+#globalToastContainer {
+    position: fixed;
+    bottom: 1.25rem;
+    right: 1.25rem;
+    z-index: 2000;
+    max-width: 380px;
+}
+
+.draft-banner {
+    background-color: #fff8e1;
+    border: 1.5px solid #ffd54f;
+    border-radius: 12px;
+    padding: 0.65rem 1rem;
+    color: #6d4c41;
+    font-weight: 600;
+}
+
+@media (max-width: 767.98px) {
+    body {
+        font-size: 16px;
+    }
+    .btn-agri, .btn-agri-outline {
+        width: 100%;
+    }
+}

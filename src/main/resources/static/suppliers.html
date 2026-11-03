@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suppliers - Smart Indian Poultry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div id="appNavbarMount"></div>
+
+    <main class="container py-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <div>
+                <h2 class="fw-bold text-success mb-1">🚚 <span data-i18n="nav_suppliers">Suppliers</span></h2>
+                <p class="text-muted mb-0">Manage Feed Mills, Hatcheries, Veterinary Distributors & Equipment Suppliers with live payable balances.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/purchases.html" id="btnRecordPurchase" class="btn-agri-outline text-decoration-none">🧾 Record Purchase Invoice</a>
+                <button type="button" class="btn-agri" id="btnAddSupplier" data-bs-toggle="modal" data-bs-target="#supplierModal">
+                    ➕ Add Supplier
+                </button>
+            </div>
+        </div>
+
+        <div class="row g-3" id="suppliersGrid"></div>
+    </main>
+
+    <!-- Add Supplier Modal -->
+    <div class="modal fade" id="supplierModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <form class="modal-content rounded-4" id="supplierForm">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold">🚚 Add Poultry Supplier</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Farm *</label>
+                            <select class="form-select" id="supFarm" required></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Supplier Code *</label>
+                            <input type="text" class="form-control" id="supCode" placeholder="SUP-MH-010" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Supplier / Company Name *</label>
+                            <input type="text" class="form-control" id="supName" placeholder="Suguna Poultry Feeds" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Contact Person</label>
+                            <input type="text" class="form-control" id="supContact" placeholder="Mahesh Patil">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Mobile Number *</label>
+                            <input type="text" class="form-control" id="supPhone" placeholder="9822012345" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">GSTIN (Optional)</label>
+                            <input type="text" class="form-control" id="supGst" placeholder="27AAAAA0000A1Z5">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">City / Town</label>
+                            <input type="text" class="form-control" id="supCity" placeholder="Baramati">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">State</label>
+                            <input type="text" class="form-control" id="supState" value="Maharashtra">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Primary Supply Type</label>
+                            <select class="form-select" id="supCategory">
+                                <option value="FEED">FEED</option>
+                                <option value="MEDICINE">MEDICINE & VACCINE</option>
+                                <option value="CHICKS">DAY-OLD CHICKS</option>
+                                <option value="EQUIPMENT">EQUIPMENT & PACKAGING</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Address / Notes (Voice Supported)</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="supAddress" placeholder="MIDC Industrial Area">
+                                <button type="button" class="btn btn-outline-success" onclick="PoultryApp.startVoiceInput(this, 'supAddress')">🎤</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn-agri w-100">Save Supplier</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/i18n.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        (async function init() {
+            const user = await PoultryApp.requireAuth(["SUPER_ADMIN", "FARM_ADMIN", "FARM_MANAGER", "FARMER"]);
+            if (!user) return;
+            PoultryApp.renderProtectedShell("suppliers");
+            if (user.role === "FARMER") {
+                document.getElementById("btnAddSupplier").classList.add("d-none");
+                document.getElementById("btnRecordPurchase").classList.add("d-none");
+            }
+
+            const farmsRes = await PoultryApp.apiFetch("/api/farms");
+            document.getElementById("supFarm").innerHTML = (farmsRes.data || [])
+                .map(f => `<option value="${f.id}">${PoultryApp.escapeHtml(f.farmName)}</option>`).join("");
+
+            await loadSuppliers();
+
+            document.getElementById("supplierForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                try {
+                    const cat = document.getElementById("supCategory").value;
+                    const cats = cat === "MEDICINE" ? ["MEDICINE", "VACCINE"] : (cat === "EQUIPMENT" ? ["EQUIPMENT", "PACKAGING"] : [cat]);
+                    const payload = {
+                        farmId: document.getElementById("supFarm").value,
+                        supplierCode: document.getElementById("supCode").value,
+                        supplierName: document.getElementById("supName").value,
+                        contactPerson: document.getElementById("supContact").value,
+                        phone: document.getElementById("supPhone").value,
+                        gstNumber: document.getElementById("supGst").value,
+                        city: document.getElementById("supCity").value,
+                        state: document.getElementById("supState").value,
+                        address: document.getElementById("supAddress").value,
+                        suppliedCategories: cats
+                    };
+                    await PoultryApp.apiFetch("/api/suppliers", { method: "POST", body: JSON.stringify(payload) });
+                    bootstrap.Modal.getInstance(document.getElementById("supplierModal")).hide();
+                    PoultryApp.showToast("Supplier saved!", "success");
+                    await loadSuppliers();
+                } catch (err) {
+                    PoultryApp.showToast(err.message, "danger");
+                }
+            });
+        })();
+
+        async function loadSuppliers() {
+            const res = await PoultryApp.apiFetch("/api/suppliers");
+            const list = res.data || [];
+            const grid = document.getElementById("suppliersGrid");
+            if (list.length === 0) {
+                grid.innerHTML = `<div class="col-12"><div class="agri-card p-4 text-center text-muted">No suppliers added yet.</div></div>`;
+                return;
+            }
+            grid.innerHTML = list.map(s => `
+                <div class="col-md-6 col-lg-4">
+                    <div class="agri-card p-4 h-100">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-success">${PoultryApp.escapeHtml((s.suppliedCategories || []).join(", ") || "SUPPLIER")}</span>
+                            <span class="badge bg-light text-dark border">${PoultryApp.escapeHtml(s.supplierCode)}</span>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-1">${PoultryApp.escapeHtml(s.supplierName)}</h5>
+                        <div class="small text-muted mb-2">👤 ${PoultryApp.escapeHtml(s.contactPerson || 'Manager')} • 📞 ${PoultryApp.escapeHtml(s.phone)}</div>
+                        <div class="small text-muted mb-3">📍 ${PoultryApp.escapeHtml(s.city || '')}, ${PoultryApp.escapeHtml(s.state || '')} ${s.gstNumber ? '• GST: ' + PoultryApp.escapeHtml(s.gstNumber) : ''}</div>
+                        <div class="p-3 rounded-3 bg-light border">
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span>Total Purchased:</span>
+                                <strong>₹${Number(s.totalPurchasesAmount || 0).toLocaleString("en-IN")}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span>Paid to Supplier:</span>
+                                <strong class="text-success">₹${Number(s.totalPaidAmount || 0).toLocaleString("en-IN")}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between small pt-1 border-top">
+                                <span>Outstanding Payable:</span>
+                                <strong class="${(s.outstandingPayable || 0) > 0 ? 'text-danger' : 'text-muted'}">₹${Number(s.outstandingPayable || 0).toLocaleString("en-IN")}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join("");
+        }
+    </script>
+</body>
+</html>

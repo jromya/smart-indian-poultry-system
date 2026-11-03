@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chicken Cutting Shop - Smart Indian Poultry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div id="appNavbarMount"></div>
+
+    <main class="container py-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <div>
+                <h2 class="fw-bold text-success mb-1">🔪 <span data-i18n="nav_chicken_shop">Chicken Cutting Shop</span></h2>
+                <p class="text-muted mb-0" id="shopSubtitle">Separate Live Bird Cage Stock & Chilled Dressed Meat Stock — Actual Dressed Weight Recording (Never Fixed Yield!).</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-success fw-bold rounded-3"
+                        onclick="PoultryApp.speakText('Enter live birds processed, live weight in kilograms, purchase rate, and actual weighed dressed meat after cutting. Never assume fixed yield.')">
+                    🔊 Audio Instructions
+                </button>
+                <a href="/expenses.html" class="btn-agri-outline text-decoration-none">📉 Shop Rent / Ice Expenses</a>
+            </div>
+        </div>
+
+        <!-- Strictly Separate Live Bird vs Dressed Meat Stock + Shop P&L Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-3">
+                <div class="agri-card p-3 h-100 border-start border-4 border-warning">
+                    <div class="text-muted small fw-bold">🐓 LIVE BIRDS IN CAGE</div>
+                    <div class="fs-3 fw-bold text-dark" id="kpiShopLiveBirds">0 Birds</div>
+                    <div class="small text-muted">Separate Uncut Live Stock</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="agri-card p-3 h-100 border-start border-4 border-danger">
+                    <div class="text-muted small fw-bold">🥩 CHILLED DRESSED MEAT STOCK</div>
+                    <div class="fs-3 fw-bold text-danger" id="kpiShopDressedKg">0.00 kg</div>
+                    <div class="small text-muted" id="kpiTotalCutSold">Sold: 0 kg</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="agri-card p-3 h-100 border-start border-4 border-primary">
+                    <div class="text-muted small fw-bold">💰 TOTAL SHOP REVENUE</div>
+                    <div class="fs-4 fw-bold text-primary" id="kpiShopRevenue">₹0</div>
+                    <div class="small text-muted" id="kpiShopRevSplit">Meat + By-Products</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="agri-card p-3 h-100 border-start border-4 border-success">
+                    <div class="text-muted small fw-bold">📈 SHOP NET PROFIT / LOSS</div>
+                    <div class="fs-4 fw-bold" id="kpiShopNetProfit">₹0</div>
+                    <div class="small text-muted" id="kpiShopTotalCost">Total Cost: ₹0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <!-- Processing & Actual Dressed Weight Entry -->
+            <div class="col-lg-7">
+                <div class="agri-card p-4 h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold text-success mb-0">🔪 Daily Cutting & Actual Dressed Weight Entry</h5>
+                        <span class="badge bg-warning text-dark">Actual Weighed Meat Only</span>
+                    </div>
+                    <div id="shopProcessFormDraftBanner" class="alert alert-warning py-2 d-none">
+                        📝 Restored unsaved cutting shop draft!
+                    </div>
+                    <form id="shopProcessForm">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Date *</label>
+                                <input type="date" class="form-control" id="csDate" name="recordDate" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Bird Variety</label>
+                                <select class="form-select" id="csBirdType" name="birdType">
+                                    <option value="Commercial Broiler">Commercial Broiler</option>
+                                    <option value="Desi / Gavran">Desi / Gavran</option>
+                                    <option value="Kadaknath">Kadaknath</option>
+                                    <option value="Vanaraja / Giriraja">Vanaraja / Giriraja</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Supplier / Farm</label>
+                                <input type="text" class="form-control" id="csSupplier" name="supplierOrFarmName" placeholder="Pune Broiler Mandi">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">New Live Birds Bought</label>
+                                <input type="number" min="0" class="form-control" id="csBought" name="liveBirdsPurchased" value="50">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Birds Cut Today *</label>
+                                <input type="number" min="1" class="form-control" id="csCutCount" name="birdsProcessedCount" value="45" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Total Live Wt Cut (kg) *</label>
+                                <input type="number" step="0.01" min="0.5" class="form-control" id="csLiveWt" name="liveWeightKg" placeholder="95.0" required>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Live Rate (₹/kg) *</label>
+                                <input type="number" step="0.01" min="1" class="form-control" id="csLiveRate" name="livePurchaseRatePerKg" placeholder="118" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold text-danger">Actual Dressed Meat (kg) *</label>
+                                <input type="number" step="0.01" min="0.2" class="form-control border-danger fw-bold" id="csDressedWt" name="actualDressedMeatWeightKg" placeholder="64.8" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Waste / Feathers (kg)</label>
+                                <input type="number" step="0.01" min="0" class="form-control" id="csWasteWt" name="wasteAndFeathersKg" placeholder="Auto if 0" value="0">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Meat Sold Now (kg)</label>
+                                <input type="number" step="0.01" min="0" class="form-control" id="csSoldKg" name="meatSoldImmediatelyKg" placeholder="60.0" value="0">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Meat Selling Price (₹/kg)</label>
+                                <input type="number" step="0.01" min="1" class="form-control" id="csSellRate" name="sellingPricePerKg" value="230">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">By-Product Sales (₹)</label>
+                                <input type="number" step="0.01" min="0" class="form-control" id="csByProd" name="byProductSalesInr" placeholder="Liver/Paws ₹" value="0">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Processing Expenses (Butcher/Ice/Bags ₹)</label>
+                                <input type="number" step="0.01" min="0" class="form-control" id="csProcExp" name="processingExpensesInr" value="450">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Other Allocated Expenses (₹)</label>
+                                <input type="number" step="0.01" min="0" class="form-control" id="csOtherExp" name="otherAllocatedExpensesInr" value="200">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Shop Remarks (Voice Supported)</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="csRemarks" name="remarks" placeholder="Skinless curry cut + hotel boneless">
+                                    <button type="button" class="btn btn-outline-success" onclick="PoultryApp.startVoiceInput(this, 'csRemarks')">🎤</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Live Exact Section 10 Formula Preview -->
+                        <div class="p-3 rounded-4 bg-light border mt-3 mb-3 small">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Live Purchase Cost (Live Wt × Rate):</span>
+                                <strong id="prevLiveCost">₹0</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Observed Actual Dressing Yield %:</span>
+                                <strong class="text-primary" id="prevYield">0.0%</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Total Revenue (Meat Sales + By-Products):</span>
+                                <strong class="text-success" id="prevTotRev">₹0</strong>
+                            </div>
+                            <div class="d-flex justify-content-between border-top pt-1 mt-1">
+                                <span>Net Profit (Revenue − Purchase − Processing − Other):</span>
+                                <strong class="fs-6" id="prevNetProfit">₹0</strong>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-agri w-100">🔪 Save Cutting Batch & Update Meat Stock</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Sell Chilled Dressed Meat From Stock + History -->
+            <div class="col-lg-5">
+                <div class="agri-card p-4 mb-4">
+                    <h5 class="fw-bold text-danger mb-3">🥩 Sell Chilled Dressed Meat from Counter Stock</h5>
+                    <form id="counterMeatSaleForm">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label fw-bold">Meat Qty (kg) *</label>
+                                <input type="number" step="0.05" min="0.1" class="form-control" id="cmQty" placeholder="2.5" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold">Rate (₹/kg) *</label>
+                                <input type="number" step="0.01" min="1" class="form-control" id="cmRate" value="230" required>
+                            </div>
+                            <div class="col-7">
+                                <label class="form-label fw-bold">Customer / Hotel</label>
+                                <input type="text" class="form-control" id="cmCustomer" placeholder="Counter Customer">
+                            </div>
+                            <div class="col-5">
+                                <label class="form-label fw-bold">Payment</label>
+                                <select class="form-select" id="cmMode">
+                                    <option value="UPI">UPI</option>
+                                    <option value="CASH">Cash</option>
+                                </select>
+                            </div>
+                            <div class="col-12 mt-3">
+                                <button type="submit" class="btn btn-danger btn-lg w-100 fw-bold rounded-3">🧾 Bill Chilled Meat Sale</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <h5 class="fw-bold mb-3">📋 Recent Processing Batches</h5>
+                <div class="d-flex flex-column gap-3" id="processingHistoryBox"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/i18n.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let currentShopId = null;
+
+        function fmtInr(v) {
+            return "₹" + Number(v || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+        }
+
+        function updateShopPreview() {
+            const liveWt = Number(document.getElementById("csLiveWt").value || 0);
+            const liveRate = Number(document.getElementById("csLiveRate").value || 0);
+            const dressedWt = Number(document.getElementById("csDressedWt").value || 0);
+            const soldKg = Number(document.getElementById("csSoldKg").value || 0);
+            const sellRate = Number(document.getElementById("csSellRate").value || 0);
+            const byProd = Number(document.getElementById("csByProd").value || 0);
+            const procExp = Number(document.getElementById("csProcExp").value || 0);
+            const otherExp = Number(document.getElementById("csOtherExp").value || 0);
+
+            const livePurchaseCost = liveWt * liveRate;
+            const totalRevenue = (soldKg * sellRate) + byProd;
+            const netProfit = totalRevenue - livePurchaseCost - procExp - otherExp;
+            const yieldPct = liveWt > 0 ? ((dressedWt / liveWt) * 100) : 0;
+
+            document.getElementById("prevLiveCost").textContent = fmtInr(livePurchaseCost);
+            document.getElementById("prevYield").textContent = yieldPct.toFixed(1) + "% (Actual Measured)";
+            document.getElementById("prevTotRev").textContent = fmtInr(totalRevenue);
+            const npEl = document.getElementById("prevNetProfit");
+            npEl.textContent = fmtInr(netProfit);
+            npEl.className = "fs-6 fw-bold " + (netProfit >= 0 ? "text-success" : "text-danger");
+        }
+
+        async function loadShopDashboard() {
+            const res = await PoultryApp.apiFetch("/api/chicken-shops/dashboard");
+            const d = res.data || {};
+            const shop = d.shop || {};
+            currentShopId = shop.id;
+
+            document.getElementById("shopSubtitle").textContent =
+                `${shop.shopName || "Chicken Cutting Shop"} (${shop.shopCode || ""}) — Separate Live Bird & Dressed Meat Stock`;
+            document.getElementById("kpiShopLiveBirds").textContent = `${d.liveBirdsStockCount || 0} Birds`;
+            document.getElementById("kpiShopDressedKg").textContent = `${Number(d.dressedMeatStockKg || 0).toFixed(2)} kg`;
+            document.getElementById("kpiTotalCutSold").textContent =
+                `Produced: ${Number(shop.totalDressedMeatProducedKg || 0).toFixed(1)} kg | Sold: ${Number(shop.totalDressedMeatSoldKg || 0).toFixed(1)} kg`;
+
+            document.getElementById("kpiShopRevenue").textContent = fmtInr(d.totalRevenueInr);
+            document.getElementById("kpiShopRevSplit").textContent =
+                `Meat: ${fmtInr(d.totalMeatSalesRevenueInr)} | By-Prod: ${fmtInr(d.totalByProductSalesRevenueInr)}`;
+
+            const net = Number(d.netProfitLossInr || 0);
+            const npEl = document.getElementById("kpiShopNetProfit");
+            npEl.textContent = fmtInr(net);
+            npEl.className = "fs-4 fw-bold " + (net >= 0 ? "text-success" : "text-danger");
+            document.getElementById("kpiShopTotalCost").textContent = `Total Cost: ${fmtInr(d.totalCostInr)}`;
+
+            const history = d.processingRecords || [];
+            const box = document.getElementById("processingHistoryBox");
+            if (!history.length) {
+                box.innerHTML = `<div class="agri-card p-3 text-center text-muted">No cutting records yet.</div>`;
+                return;
+            }
+            box.innerHTML = history.slice(0, 6).map(r => `
+                <div class="agri-card p-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <strong>📅 ${PoultryApp.escapeHtml(r.recordDate)} • ${PoultryApp.escapeHtml(r.birdType)}</strong>
+                        <span class="badge bg-info text-dark">Yield: ${r.observedDressingPct}%</span>
+                    </div>
+                    <div class="small text-muted mb-2">
+                        Cut <b>${r.birdsProcessedCount}</b> birds (${r.liveWeightKg} kg live → <b>${r.actualDressedMeatWeightKg} kg</b> actual meat)
+                    </div>
+                    <div class="d-flex justify-content-between small border-top pt-2">
+                        <span>Rev: <b>${fmtInr(r.totalRevenueInr)}</b> | Cost: <b>${fmtInr(r.totalCostInr)}</b></span>
+                        <strong class="${r.netProfitLossInr >= 0 ? 'text-success' : 'text-danger'}">
+                            ${r.netProfitLossInr >= 0 ? 'Profit: ' : 'Loss: '}${fmtInr(r.netProfitLossInr)}
+                        </strong>
+                    </div>
+                </div>
+            `).join("");
+        }
+
+        (async function init() {
+            const user = await PoultryApp.requireAuth(["SUPER_ADMIN", "FARM_ADMIN", "CHICKEN_SHOP_OWNER"]);
+            if (!user) return;
+            PoultryApp.renderProtectedShell("chicken-shop");
+
+            const today = new Date().toISOString().split("T")[0];
+            document.getElementById("csDate").value = today;
+
+            ["csLiveWt", "csLiveRate", "csDressedWt", "csSoldKg", "csSellRate", "csByProd", "csProcExp", "csOtherExp"].forEach(id => {
+                document.getElementById(id).addEventListener("input", updateShopPreview);
+            });
+
+            await loadShopDashboard();
+            PoultryApp.bindOfflineDraft("shopProcessForm", "draft_chicken_shop_phase4");
+            updateShopPreview();
+
+            document.getElementById("shopProcessForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                try {
+                    const payload = {
+                        shopId: currentShopId,
+                        recordDate: document.getElementById("csDate").value,
+                        birdType: document.getElementById("csBirdType").value,
+                        supplierOrFarmName: document.getElementById("csSupplier").value,
+                        liveBirdsPurchased: Number(document.getElementById("csBought").value || 0),
+                        birdsProcessedCount: Number(document.getElementById("csCutCount").value),
+                        liveWeightKg: Number(document.getElementById("csLiveWt").value),
+                        livePurchaseRatePerKg: Number(document.getElementById("csLiveRate").value),
+                        actualDressedMeatWeightKg: Number(document.getElementById("csDressedWt").value),
+                        wasteAndFeathersKg: Number(document.getElementById("csWasteWt").value || 0),
+                        meatSoldImmediatelyKg: Number(document.getElementById("csSoldKg").value || 0),
+                        sellingPricePerKg: Number(document.getElementById("csSellRate").value || 220),
+                        byProductSalesInr: Number(document.getElementById("csByProd").value || 0),
+                        processingExpensesInr: Number(document.getElementById("csProcExp").value || 0),
+                        otherAllocatedExpensesInr: Number(document.getElementById("csOtherExp").value || 0),
+                        remarks: document.getElementById("csRemarks").value
+                    };
+                    await PoultryApp.apiFetch("/api/chicken-shops/process", {
+                        method: "POST",
+                        body: JSON.stringify(payload)
+                    });
+                    PoultryApp.clearOfflineDraft("shopProcessForm", "draft_chicken_shop_phase4");
+                    PoultryApp.showToast("Cutting batch & actual dressed meat weight recorded!", "success");
+                    e.target.reset();
+                    document.getElementById("csDate").value = today;
+                    updateShopPreview();
+                    await loadShopDashboard();
+                } catch (err) {
+                    PoultryApp.showToast(err.message, "danger");
+                }
+            });
+
+            document.getElementById("counterMeatSaleForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                try {
+                    const qty = Number(document.getElementById("cmQty").value);
+                    const rate = Number(document.getElementById("cmRate").value);
+                    await PoultryApp.apiFetch("/api/sales", {
+                        method: "POST",
+                        body: JSON.stringify({
+                            invoiceNumber: "CS-" + Math.floor(10000 + Math.random() * 89999),
+                            saleDate: today,
+                            chickenShopId: currentShopId,
+                            saleCategory: "DRESSED_MEAT_SALE",
+                            productDescription: "Chilled Dressed Chicken Counter Sale",
+                            walkInCustomerName: document.getElementById("cmCustomer").value || "Counter Customer",
+                            buyerCategory: "DIRECT_CUSTOMER",
+                            quantity: qty,
+                            unit: "KG",
+                            unitSellingPriceInr: rate,
+                            cashReceivedInr: Number((qty * rate).toFixed(2)),
+                            paymentMode: document.getElementById("cmMode").value
+                        })
+                    });
+                    PoultryApp.showToast("Chilled meat sold & shop dressed stock updated!", "success");
+                    e.target.reset();
+                    document.getElementById("cmRate").value = rate;
+                    await loadShopDashboard();
+                } catch (err) {
+                    PoultryApp.showToast(err.message, "danger");
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

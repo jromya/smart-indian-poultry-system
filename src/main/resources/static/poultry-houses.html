@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poultry Houses - Smart Indian Poultry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div id="appNavbarMount"></div>
+
+    <main class="container py-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <div>
+                <h2 class="fw-bold text-success mb-1">🏗️ <span data-i18n="nav_houses">Poultry Sheds</span></h2>
+                <p class="text-muted mb-0">Manage broiler EC sheds, layer cage houses, and desi free-range enclosures.</p>
+            </div>
+            <div class="d-flex gap-2 align-items-center flex-wrap">
+                <select id="filterFarmSelect" class="form-select" style="width:auto;" onchange="loadHouses()">
+                    <option value="">All Accessible Farms</option>
+                </select>
+                <button class="btn-agri d-none" id="btnOpenHouseModal" onclick="openHouseModal()">
+                    ➕ <span data-i18n="btn_add_house">Add Poultry Shed</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="row g-4" id="housesGrid"></div>
+    </main>
+
+    <!-- Create / Edit Poultry House Modal -->
+    <div class="modal fade" id="houseModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content rounded-4">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold">🏗️ Poultry House / Shed Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="houseForm">
+                        <input type="hidden" id="editHouseId">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Select Farm *</label>
+                                <select id="farmId" name="farmId" class="form-select" required></select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Shed Code *</label>
+                                <input type="text" id="houseCode" name="houseCode" class="form-control" placeholder="SHED-04" required>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Shed Name *</label>
+                                <div class="input-group">
+                                    <input type="text" id="houseName" name="houseName" class="form-control" placeholder="West Open Broiler Shed" required>
+                                    <button type="button" class="btn voice-mic-btn" onclick="PoultryApp.startVoiceInput(this, 'houseName')">🎤</button>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Max Bird Capacity *</label>
+                                <input type="number" id="maxBirdCapacity" name="maxBirdCapacity" class="form-control" min="10" value="3000" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">House Type *</label>
+                                <select id="houseType" name="houseType" class="form-select">
+                                    <option value="DEEP_LITTER">Deep Litter Shed</option>
+                                    <option value="EC_SHED">Environment Controlled (EC)</option>
+                                    <option value="CAGE_SYSTEM">Elevated Layer Cage House</option>
+                                    <option value="FREE_RANGE_DESI">Free-Range Desi Enclosure</option>
+                                    <option value="BROODER_HOUSE">Chick Brooder House</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Bird Purpose *</label>
+                                <select id="birdPurpose" name="birdPurpose" class="form-select">
+                                    <option value="BROILER">Broiler</option>
+                                    <option value="LAYER">Egg Layer</option>
+                                    <option value="INDIGENOUS">Indigenous / Desi</option>
+                                    <option value="BREEDER">Parent Breeder</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Current Status</label>
+                                <select id="status" name="status" class="form-select">
+                                    <option value="AVAILABLE">Available for Batch</option>
+                                    <option value="OCCUPIED">Occupied</option>
+                                    <option value="CLEANING_REST">Cleaning / Bio-Rest</option>
+                                    <option value="MAINTENANCE">Under Maintenance</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Length (Feet)</label>
+                                <input type="number" id="lengthFeet" name="lengthFeet" class="form-control" value="100">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Width (Feet)</label>
+                                <input type="number" id="widthFeet" name="widthFeet" class="form-control" value="35">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Ventilation</label>
+                                <select id="ventilationType" name="ventilationType" class="form-select">
+                                    <option value="NATURAL_OPEN">Natural Side-Curtain Open</option>
+                                    <option value="TUNNEL_FAN_PAD">Tunnel Fan & Cooling Pad</option>
+                                    <option value="EXHAUST_FAN">Exhaust Fan Assisted</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-4 d-flex gap-2 justify-content-end">
+                            <button type="button" class="btn-agri-outline" data-bs-dismiss="modal" data-i18n="btn_cancel">Cancel</button>
+                            <button type="submit" class="btn-agri" data-i18n="btn_save">Save Details</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/i18n.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let housesCache = [];
+        let houseModal = null;
+        let canWriteHouses = false;
+
+        async function loadHouses() {
+            const farmId = document.getElementById("filterFarmSelect").value;
+            const query = farmId ? `?farmId=${encodeURIComponent(farmId)}` : "";
+            const res = await PoultryApp.apiFetch("/api/poultry-houses" + query);
+            housesCache = res.data || [];
+            const grid = document.getElementById("housesGrid");
+            if (housesCache.length === 0) {
+                grid.innerHTML = `<div class="col-12"><div class="agri-card p-5 text-center text-muted">No poultry sheds found for this filter.</div></div>`;
+                return;
+            }
+            grid.innerHTML = housesCache.map(h => `
+                <div class="col-md-6 col-lg-4">
+                    <div class="agri-card p-4 h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="badge bg-success">${PoultryApp.escapeHtml(h.houseCode)}</span>
+                                <span class="badge ${h.status === 'AVAILABLE' ? 'bg-info text-dark' : 'bg-warning text-dark'}">${PoultryApp.escapeHtml(h.status)}</span>
+                            </div>
+                            <h5 class="fw-bold text-success mb-1">${PoultryApp.escapeHtml(h.houseName)}</h5>
+                            <div class="small text-muted mb-3">🏡 ${PoultryApp.escapeHtml(h.farmName)}</div>
+                            <div class="bg-light rounded-3 p-3 small mb-3">
+                                <div><strong>Purpose:</strong> ${PoultryApp.escapeHtml(h.birdPurpose)}</div>
+                                <div><strong>Type:</strong> ${PoultryApp.escapeHtml(h.houseType)}</div>
+                                <div><strong>Max Capacity:</strong> ${Number(h.maxBirdCapacity).toLocaleString("en-IN")} birds</div>
+                                <div><strong>Size:</strong> ${h.lengthFeet || '-'} ft × ${h.widthFeet || '-'} ft</div>
+                            </div>
+                        </div>
+                        ${canWriteHouses ? `<button class="btn-agri-outline btn-sm w-100" onclick="editHouse('${h.id}')">✏️ Edit Shed</button>` : ""}
+                    </div>
+                </div>
+            `).join("");
+        }
+
+        function openHouseModal() {
+            document.getElementById("editHouseId").value = "";
+            document.getElementById("houseForm").reset();
+            const currentFilter = document.getElementById("filterFarmSelect").value;
+            if (currentFilter) document.getElementById("farmId").value = currentFilter;
+            houseModal.show();
+        }
+
+        function editHouse(id) {
+            const h = housesCache.find(x => x.id === id);
+            if (!h) return;
+            document.getElementById("editHouseId").value = h.id;
+            document.getElementById("farmId").value = h.farmId;
+            document.getElementById("houseCode").value = h.houseCode;
+            document.getElementById("houseName").value = h.houseName;
+            document.getElementById("maxBirdCapacity").value = h.maxBirdCapacity;
+            document.getElementById("houseType").value = h.houseType;
+            document.getElementById("birdPurpose").value = h.birdPurpose;
+            document.getElementById("status").value = h.status;
+            document.getElementById("lengthFeet").value = h.lengthFeet || 100;
+            document.getElementById("widthFeet").value = h.widthFeet || 35;
+            document.getElementById("ventilationType").value = h.ventilationType || "NATURAL_OPEN";
+            houseModal.show();
+        }
+
+        (async function init() {
+            const user = await PoultryApp.requireAuth(["SUPER_ADMIN", "FARM_ADMIN", "FARM_MANAGER", "FARMER"]);
+            if (!user) return;
+            PoultryApp.renderProtectedShell("houses");
+            houseModal = new bootstrap.Modal(document.getElementById("houseModal"));
+            canWriteHouses = ["SUPER_ADMIN", "FARM_ADMIN", "FARM_MANAGER"].includes(user.role);
+            if (canWriteHouses) document.getElementById("btnOpenHouseModal").classList.remove("d-none");
+
+            const farmsRes = await PoultryApp.apiFetch("/api/farms");
+            const farms = farmsRes.data || [];
+            const filterSel = document.getElementById("filterFarmSelect");
+            const modalFarmSel = document.getElementById("farmId");
+            farms.forEach(f => {
+                filterSel.insertAdjacentHTML("beforeend", `<option value="${f.id}">${PoultryApp.escapeHtml(f.farmName)}</option>`);
+                modalFarmSel.insertAdjacentHTML("beforeend", `<option value="${f.id}">${PoultryApp.escapeHtml(f.farmName)}</option>`);
+            });
+
+            const urlFarmId = new URLSearchParams(window.location.search).get("farmId");
+            if (urlFarmId) filterSel.value = urlFarmId;
+            await loadHouses();
+
+            document.getElementById("houseForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const editId = document.getElementById("editHouseId").value;
+                const payload = {
+                    farmId: document.getElementById("farmId").value,
+                    houseCode: document.getElementById("houseCode").value,
+                    houseName: document.getElementById("houseName").value,
+                    maxBirdCapacity: Number(document.getElementById("maxBirdCapacity").value),
+                    houseType: document.getElementById("houseType").value,
+                    birdPurpose: document.getElementById("birdPurpose").value,
+                    status: document.getElementById("status").value,
+                    lengthFeet: Number(document.getElementById("lengthFeet").value || 0),
+                    widthFeet: Number(document.getElementById("widthFeet").value || 0),
+                    ventilationType: document.getElementById("ventilationType").value
+                };
+                try {
+                    const res = await PoultryApp.apiFetch(editId ? `/api/poultry-houses/${editId}` : "/api/poultry-houses", {
+                        method: editId ? "PUT" : "POST",
+                        body: JSON.stringify(payload)
+                    });
+                    houseModal.hide();
+                    PoultryApp.showToast(res.message, "success");
+                    await loadHouses();
+                } catch (err) {
+                    PoultryApp.showToast(err.message, "danger");
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Smart Indian Poultry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar agri-navbar py-3">
+        <div class="container d-flex justify-content-between align-items-center">
+            <a class="navbar-brand" href="/index.html">
+                <span>🐓</span> <span data-i18n="app_title">Smart Indian Poultry</span>
+            </a>
+            <div class="d-flex align-items-center gap-2">
+                <select id="loginLangSelect" class="form-select form-select-sm lang-selector-dropdown fw-semibold" style="width:auto;"
+                        onchange="PoultryApp.changeLanguage(this.value, false)"></select>
+                <a href="/register.html" class="btn btn-warning btn-sm fw-bold px-3 py-2 rounded-3">
+                    📝 <span data-i18n="nav_register">New Registration</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container py-4">
+        <div class="row justify-content-center g-4">
+            <div class="col-md-7 col-lg-5">
+                <div class="agri-card p-4 p-md-5">
+                    <div class="text-center mb-4">
+                        <div class="display-4 mb-2">🔐</div>
+                        <h3 class="fw-bold text-success" data-i18n="login_heading">Farmer & Business Login</h3>
+                    </div>
+
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label class="form-label" for="identifier" data-i18n="login_identifier">Username, Mobile Number, or Email</label>
+                            <div class="input-group">
+                                <input type="text" id="identifier" name="identifier" class="form-control"
+                                       placeholder="e.g. farmer1 or 9800000004" required>
+                                <button type="button" class="btn voice-mic-btn" title="Voice Input"
+                                        onclick="PoultryApp.startVoiceInput(this, 'identifier')">🎤</button>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label" for="password" data-i18n="login_password">Password</label>
+                            <div class="input-group">
+                                <input type="password" id="password" name="password" class="form-control"
+                                       placeholder="Enter password" required>
+                                <button type="button" class="btn btn-outline-secondary px-3"
+                                        onclick="const p=document.getElementById('password'); p.type = p.type==='password'?'text':'password';">👁️</button>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="loginSubmitBtn" class="btn-agri w-100 mb-3">
+                            ✅ <span data-i18n="login_submit">Login to Account</span>
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-2">
+                        <a href="/register.html" class="fw-bold text-success text-decoration-none">
+                            ➕ <span data-i18n="nav_register">New Registration</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Beginner One-Tap Demo Role Tester -->
+            <div class="col-md-7 col-lg-5">
+                <div class="agri-card p-4 bg-white">
+                    <h5 class="fw-bold text-success mb-2">🧪 Quick Development Role Login (Testing)</h5>
+                    <p class="small text-muted mb-3">Tap any role below to auto-fill credentials and test role-based permissions & farm isolation:</p>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-success text-start py-2 px-3 rounded-3 fw-semibold"
+                                onclick="fillDemo('superadmin', 'Admin@12345')">
+                            👑 1. Super Admin (All Farms & System) — <code>superadmin</code>
+                        </button>
+                        <button type="button" class="btn btn-outline-success text-start py-2 px-3 rounded-3 fw-semibold"
+                                onclick="fillDemo('farmadmin1', 'Farm@12345')">
+                            🏡 2. Farm Admin (Nashik Farm 1, Marathi) — <code>farmadmin1</code>
+                        </button>
+                        <button type="button" class="btn btn-outline-success text-start py-2 px-3 rounded-3 fw-semibold"
+                                onclick="fillDemo('farmadmin2', 'Farm@12345')">
+                            🏡 2b. Farm Admin 2 (Jhabua Kadaknath Farm 2) — <code>farmadmin2</code>
+                        </button>
+                        <button type="button" class="btn btn-outline-success text-start py-2 px-3 rounded-3 fw-semibold"
+                                onclick="fillDemo('manager1', 'Manager@123')">
+                            📋 3. Farm Manager (Nashik Farm 1, Hindi) — <code>manager1</code>
+                        </button>
+                        <button type="button" class="btn btn-outline-success text-start py-2 px-3 rounded-3 fw-semibold"
+                                onclick="fillDemo('farmer1', 'Farmer@123')">
+                            👨‍🌾 4. Farmer (Nashik Farm 1, Marathi) — <code>farmer1</code>
+                        </button>
+                        <button type="button" class="btn btn-outline-success text-start py-2 px-3 rounded-3 fw-semibold"
+                                onclick="fillDemo('retailer1', 'Retail@123')">
+                            🥚 5. Retailer (Egg & Bird Mart) — <code>retailer1</code>
+                        </button>
+                        <button type="button" class="btn btn-outline-success text-start py-2 px-3 rounded-3 fw-semibold"
+                                onclick="fillDemo('shopowner1', 'Shop@12345')">
+                            🔪 6. Chicken Shop Owner (Cutting Shop) — <code>shopowner1</code>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/i18n.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        document.getElementById("loginLangSelect").innerHTML = PoultryApp.buildLanguageOptionsHtml();
+        applyPageTranslations();
+
+        function fillDemo(user, pass) {
+            document.getElementById("identifier").value = user;
+            document.getElementById("password").value = pass;
+            PoultryApp.showToast("Filled credentials for " + user + ". Tap Login!", "success");
+        }
+
+        document.getElementById("loginForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById("loginSubmitBtn");
+            btn.disabled = true;
+            try {
+                const res = await PoultryApp.apiFetch("/api/auth/login", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        identifier: document.getElementById("identifier").value,
+                        password: document.getElementById("password").value
+                    })
+                });
+                if (res.data && res.data.preferredLanguage) {
+                    localStorage.setItem("poultry_lang", res.data.preferredLanguage);
+                }
+                PoultryApp.showToast(res.message || "Login successful!", "success");
+                setTimeout(() => { window.location.href = "/dashboard.html"; }, 500);
+            } catch (err) {
+                PoultryApp.showToast(err.message, "danger");
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

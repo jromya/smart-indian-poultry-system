@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Indian Poultry Farm Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar agri-navbar py-3">
+        <div class="container d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <a class="navbar-brand" href="/index.html">
+                <span>🐓</span> <span data-i18n="app_title">Smart Indian Poultry</span>
+            </a>
+            <div class="d-flex align-items-center gap-2">
+                <select id="landingLangSelect" class="form-select form-select-sm lang-selector-dropdown fw-semibold" style="width:auto;"
+                        onchange="PoultryApp.changeLanguage(this.value, false)">
+                </select>
+                <a href="/login.html" class="btn btn-light fw-bold px-3 rounded-3">
+                    🔐 <span data-i18n="nav_login">Login</span>
+                </a>
+                <a href="/register.html" class="btn btn-warning fw-bold px-3 rounded-3">
+                    📝 <span data-i18n="nav_register">New Registration</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container py-5">
+        <div class="row align-items-center g-4 mb-5">
+            <div class="col-lg-7">
+                <span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2 rounded-pill fw-bold mb-3">
+                    🇮🇳 Made for Indian Poultry Farmers & Businesses
+                </span>
+                <h1 class="display-5 fw-bold text-success mb-3" data-i18n="hero_welcome">
+                    Empowering Indian Poultry Farmers & Chicken Businesses
+                </h1>
+                <p class="lead text-secondary mb-4" data-i18n="hero_desc">
+                    Manage Aseel, Kadaknath, Vanaraja, Giriraja, Broilers, Egg Layers, Retail & Cutting Shops with voice input and 11 Indian languages.
+                </p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="/login.html" class="btn-agri text-decoration-none px-4">
+                        🚀 <span data-i18n="login_submit">Login to Account</span>
+                    </a>
+                    <a href="/register.html" class="btn-agri-outline text-decoration-none px-4">
+                        👨‍🌾 <span data-i18n="nav_register">New Registration</span>
+                    </a>
+                    <button type="button" class="btn-agri-outline" onclick="PoultryApp.speakText('hero_desc')">
+                        🔊 <span data-i18n="btn_listen_help">Listen Audio Guide</span>
+                    </button>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="agri-card p-4">
+                    <h4 class="fw-bold text-success mb-3">🐔 Complete Poultry Lifecycle</h4>
+                    <div class="d-grid gap-3">
+                        <div class="p-3 rounded-4 bg-success bg-opacity-10 d-flex align-items-center gap-3">
+                            <span class="fs-2">🐣</span>
+                            <div>
+                                <div class="fw-bold">Indigenous, Rural & Commercial Breeds</div>
+                                <small class="text-muted">Aseel, Kadaknath, Vanaraja, Giriraja, Ross 308, Cobb 500, BV-300</small>
+                            </div>
+                        </div>
+                        <div class="p-3 rounded-4 bg-warning bg-opacity-10 d-flex align-items-center gap-3">
+                            <span class="fs-2">🏡</span>
+                            <div>
+                                <div class="fw-bold">Multi-Farm & Shed Isolation</div>
+                                <small class="text-muted">Role-based security for Super Admin, Farm Admin, Manager & Farmer</small>
+                            </div>
+                        </div>
+                        <div class="p-3 rounded-4 bg-info bg-opacity-10 d-flex align-items-center gap-3">
+                            <span class="fs-2">🏪</span>
+                            <div>
+                                <div class="fw-bold">Wholesale, Retail & Chicken Cutting Shop</div>
+                                <small class="text-muted">Actual dressed meat weight, live bird sales, egg trays & P&L PDF</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/i18n.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        document.getElementById("landingLangSelect").innerHTML = PoultryApp.buildLanguageOptionsHtml();
+        applyPageTranslations();
+    </script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+server:
+  port: ${PORT:8080}
+  servlet:
+    session:
+      timeout: 8h
+      cookie:
+        name: SMART_POULTRY_SESSION
+        http-only: true
+        same-site: lax
+
+spring:
+  application:
+    name: smart-indian-poultry-system
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:${MONGO_URL:mongodb://localhost:27017/smart_indian_poultry_db}}
+      auto-index-creation: true
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+app:
+  security:
+    seed-demo-users: ${APP_SEED_DEMO_USERS:true}
+    super-admin-username: ${APP_ADMIN_USERNAME:superadmin}
+    super-admin-password: ${APP_ADMIN_PASSWORD:Admin@12345}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: method
+
+logging:
+  level:
+    com.poultry.smartfarm: INFO
+    org.springframework.security: INFO

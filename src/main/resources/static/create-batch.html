@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Batch - Smart Indian Poultry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div id="appNavbarMount"></div>
+
+    <main class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
+                <div class="agri-card p-4 p-md-5">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                        <div>
+                            <h3 class="fw-bold text-success mb-1">🐣 <span data-i18n="nav_create_batch">Create Batch</span></h3>
+                            <p class="text-muted small mb-0">Selecting a breed automatically loads its chick price and recommended production cycle (40d Broiler, 90–150d Desi, 504d+ Layer).</p>
+                        </div>
+                        <a href="/batches.html" class="btn-agri-outline btn-sm text-decoration-none">⬅ Back to Batches</a>
+                    </div>
+
+                    <div id="createBatchFormDraftBanner" class="draft-banner mb-3 d-none">
+                        💾 <span data-i18n="draft_restored">Saved offline draft restored automatically.</span>
+                    </div>
+
+                    <form id="createBatchForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">1. Select Farm *</label>
+                                <select id="farmId" name="farmId" class="form-select" onchange="loadShedsForSelectedFarm()" required></select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">2. Select Poultry House / Shed *</label>
+                                <select id="poultryHouseId" name="poultryHouseId" class="form-select" required></select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">3. Select Indian or Commercial Breed *</label>
+                                <select id="breedId" name="breedId" class="form-select" onchange="onBreedSelected()" required></select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">4. Batch Category *</label>
+                                <select id="batchCategory" name="batchCategory" class="form-select" required>
+                                    <option value="BROILER">Broiler (Commercial Meat)</option>
+                                    <option value="LAYER">Layer (Commercial / Rural Egg)</option>
+                                    <option value="INDIGENOUS">Indigenous / Desi Dual-Purpose</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Unique Batch ID *</label>
+                                <input type="text" id="batchCode" name="batchCode" class="form-control" placeholder="BATCH-MH-2026-02" required>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">Batch Friendly Name *</label>
+                                <div class="input-group">
+                                    <input type="text" id="batchName" name="batchName" class="form-control" placeholder="e.g. Diwali Kadaknath Lot" required>
+                                    <button type="button" class="btn voice-mic-btn" onclick="PoultryApp.startVoiceInput(this, 'batchName')">🎤</button>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Purchase Date</label>
+                                <input type="date" id="purchaseDate" name="purchaseDate" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Chick Arrival Date *</label>
+                                <input type="date" id="chickArrivalDate" name="chickArrivalDate" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Initial Bird Age (Days)</label>
+                                <input type="number" id="initialBirdAgeDays" name="initialBirdAgeDays" class="form-control" min="0" value="0">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Starting Bird Quantity *</label>
+                                <input type="number" id="startingBirdQuantity" name="startingBirdQuantity" class="form-control" min="1" value="1000" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Price per Chick (₹ INR) *</label>
+                                <input type="number" step="0.5" id="purchasePricePerChick" name="purchasePricePerChick" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Planned Duration (Days) *</label>
+                                <input type="number" id="plannedDurationDays" name="plannedDurationDays" class="form-control" min="10" max="1200" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Hatchery / Supplier Name</label>
+                                <div class="input-group">
+                                    <input type="text" id="supplierName" name="supplierName" class="form-control" placeholder="e.g. ICAR DPR / Venky's Hatchery">
+                                    <button type="button" class="btn voice-mic-btn" onclick="PoultryApp.startVoiceInput(this, 'supplierName')">🎤</button>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Est. Feed Rate (₹/kg)</label>
+                                <input type="number" step="0.5" id="estimatedFeedRatePerKg" name="estimatedFeedRatePerKg" class="form-control" value="42">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Live Sell Rate (₹/kg)</label>
+                                <input type="number" step="1" id="liveSellingPricePerKg" name="liveSellingPricePerKg" class="form-control" value="125">
+                            </div>
+                        </div>
+
+                        <div class="mt-4 d-flex gap-3">
+                            <button type="submit" class="btn-agri px-5">✅ Create Poultry Batch</button>
+                            <a href="/batches.html" class="btn-agri-outline text-decoration-none">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/i18n.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let breedsMap = {};
+
+        async function loadShedsForSelectedFarm() {
+            const farmId = document.getElementById("farmId").value;
+            if (!farmId) return;
+            const res = await PoultryApp.apiFetch(`/api/poultry-houses?farmId=${encodeURIComponent(farmId)}`);
+            const sel = document.getElementById("poultryHouseId");
+            sel.innerHTML = (res.data || []).map(h =>
+                `<option value="${h.id}">${PoultryApp.escapeHtml(h.houseName)} (Max ${h.maxBirdCapacity} birds - ${h.status})</option>`
+            ).join("");
+        }
+
+        function onBreedSelected() {
+            const b = breedsMap[document.getElementById("breedId").value];
+            if (!b) return;
+            document.getElementById("purchasePricePerChick").value = b.purchasePricePerChick || 40;
+            document.getElementById("plannedDurationDays").value = b.expectedGrowth?.standardMarketAgeDays || 42;
+            if (b.breedCategory === "INDIGENOUS" || b.breedCategory === "IMPROVED_RURAL") {
+                document.getElementById("batchCategory").value = b.primaryPurpose === "EGG" ? "LAYER" : "INDIGENOUS";
+                document.getElementById("liveSellingPricePerKg").value = b.breedName === "Kadaknath" ? 420 : 260;
+            } else {
+                document.getElementById("batchCategory").value = b.primaryPurpose === "EGG" ? "LAYER" : "BROILER";
+                document.getElementById("liveSellingPricePerKg").value = 125;
+            }
+        }
+
+        (async function init() {
+            const user = await PoultryApp.requireAuth(["SUPER_ADMIN", "FARM_ADMIN", "FARM_MANAGER"]);
+            if (!user) return;
+            PoultryApp.renderProtectedShell("create-batch");
+
+            const today = new Date().toISOString().split("T")[0];
+            document.getElementById("purchaseDate").value = today;
+            document.getElementById("chickArrivalDate").value = today;
+            document.getElementById("batchCode").value = "BATCH-" + Math.floor(1000 + Math.random() * 9000);
+
+            const [farmsRes, breedsRes] = await Promise.all([
+                PoultryApp.apiFetch("/api/farms"),
+                PoultryApp.apiFetch("/api/breeds")
+            ]);
+
+            const farmSel = document.getElementById("farmId");
+            farmSel.innerHTML = (farmsRes.data || []).map(f =>
+                `<option value="${f.id}">${PoultryApp.escapeHtml(f.farmName)} (${f.farmCode})</option>`
+            ).join("");
+            await loadShedsForSelectedFarm();
+
+            const breedSel = document.getElementById("breedId");
+            breedSel.innerHTML = (breedsRes.data || []).map(b => {
+                breedsMap[b.id] = b;
+                return `<option value="${b.id}">${PoultryApp.escapeHtml(b.breedName)} (${b.breedCategory} • ${b.expectedGrowth?.standardMarketAgeDays || '-'}d)</option>`;
+            }).join("");
+            onBreedSelected();
+
+            PoultryApp.bindOfflineDraft("createBatchForm", "draft_phase2_create_batch");
+
+            document.getElementById("createBatchForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const payload = {
+                    farmId: document.getElementById("farmId").value,
+                    poultryHouseId: document.getElementById("poultryHouseId").value,
+                    breedId: document.getElementById("breedId").value,
+                    batchCategory: document.getElementById("batchCategory").value,
+                    batchCode: document.getElementById("batchCode").value,
+                    batchName: document.getElementById("batchName").value,
+                    purchaseDate: document.getElementById("purchaseDate").value,
+                    chickArrivalDate: document.getElementById("chickArrivalDate").value,
+                    initialBirdAgeDays: Number(document.getElementById("initialBirdAgeDays").value || 0),
+                    startingBirdQuantity: Number(document.getElementById("startingBirdQuantity").value),
+                    purchasePricePerChick: Number(document.getElementById("purchasePricePerChick").value),
+                    plannedDurationDays: Number(document.getElementById("plannedDurationDays").value),
+                    supplierName: document.getElementById("supplierName").value,
+                    estimatedFeedRatePerKg: Number(document.getElementById("estimatedFeedRatePerKg").value || 42),
+                    liveSellingPricePerKg: Number(document.getElementById("liveSellingPricePerKg").value || 125)
+                };
+                try {
+                    const res = await PoultryApp.apiFetch("/api/batches", {
+                        method: "POST",
+                        body: JSON.stringify(payload)
+                    });
+                    PoultryApp.clearOfflineDraft("createBatchForm", "draft_phase2_create_batch");
+                    PoultryApp.showToast(res.message, "success");
+                    setTimeout(() => { window.location.href = "/batches.html"; }, 700);
+                } catch (err) {
+                    PoultryApp.showToast(err.message, "danger");
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

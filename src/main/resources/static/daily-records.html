@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Poultry Entry - Smart Indian Poultry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div id="appNavbarMount"></div>
+
+    <main class="container py-4">
+        <div class="row g-4">
+            <!-- Left: Easy Farmer Daily Entry Form -->
+            <div class="col-lg-6">
+                <div class="agri-card p-4">
+                    <h3 class="fw-bold text-success mb-1">📝 <span data-i18n="nav_daily_records">Daily Entry</span></h3>
+                    <p class="text-muted small mb-3">Automatic Closing Birds = Opening − Mortality − Culls + Additions − Transfers Out.</p>
+
+                    <div id="dailyEntryFormDraftBanner" class="draft-banner mb-3 d-none">
+                        💾 <span data-i18n="draft_restored">Saved offline draft restored automatically.</span>
+                    </div>
+
+                    <form id="dailyEntryForm">
+                        <input type="hidden" id="editingRecordId">
+                        <div class="row g-3">
+                            <div class="col-md-7">
+                                <label class="form-label">Select Active Batch *</label>
+                                <select id="batchId" name="batchId" class="form-select" onchange="onBatchChanged()" required></select>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label">Record Date *</label>
+                                <input type="date" id="recordDate" name="recordDate" class="form-control" required>
+                            </div>
+
+                            <!-- Live Auto-Calculation Banner -->
+                            <div class="col-12">
+                                <div class="p-3 rounded-4 bg-success bg-opacity-10 border border-success d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="small text-muted fw-semibold">Opening Birds</div>
+                                        <div class="fs-4 fw-bold text-dark" id="previewOpening">0</div>
+                                    </div>
+                                    <div class="fs-3">➡️</div>
+                                    <div class="text-end">
+                                        <div class="small text-muted fw-semibold">Calculated Closing Birds</div>
+                                        <div class="fs-3 fw-bold text-success" id="previewClosing">0</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-6 col-md-3">
+                                <label class="form-label">Mortality</label>
+                                <input type="number" id="mortality" name="mortality" class="form-control" min="0" value="0" oninput="updateLiveClosingPreview()">
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label">Culls</label>
+                                <input type="number" id="culls" name="culls" class="form-control" min="0" value="0" oninput="updateLiveClosingPreview()">
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label">Additions</label>
+                                <input type="number" id="additions" name="additions" class="form-control" min="0" value="0" oninput="updateLiveClosingPreview()">
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label">Transfers Out</label>
+                                <input type="number" id="transfersOut" name="transfersOut" class="form-control" min="0" value="0" oninput="updateLiveClosingPreview()">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Feed Type</label>
+                                <select id="feedType" name="feedType" class="form-select">
+                                    <option value="STARTER">Starter</option>
+                                    <option value="GROWER">Grower</option>
+                                    <option value="FINISHER">Finisher</option>
+                                    <option value="LAYER_MASH">Layer Mash</option>
+                                    <option value="DESI_FORAGE">Desi Grain / Forage</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Feed Given (kg) *</label>
+                                <input type="number" step="0.1" id="feedConsumptionKg" name="feedConsumptionKg" class="form-control" min="0" value="0" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Water (Liters)</label>
+                                <input type="number" step="0.5" id="waterConsumptionLiters" name="waterConsumptionLiters" class="form-control" min="0" value="0">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Avg Weight (g)</label>
+                                <input type="number" step="1" id="averageBirdWeightGrams" name="averageBirdWeightGrams" class="form-control" placeholder="Optional">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Temp (°C)</label>
+                                <input type="number" step="0.1" id="temperatureCelsius" name="temperatureCelsius" class="form-control" value="28">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Humidity (%)</label>
+                                <input type="number" step="1" id="humidityPct" name="humidityPct" class="form-control" value="60">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Medicine Given</label>
+                                <input type="text" id="medicineGiven" name="medicineGiven" class="form-control" placeholder="None / Vitamin / Electrolytes">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Vaccination</label>
+                                <input type="text" id="vaccinationGiven" name="vaccinationGiven" class="form-control" placeholder="None / LaSota / IBD">
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Labour (₹)</label>
+                                <input type="number" id="labourCost" name="labourCost" class="form-control" min="0" value="0">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Electricity (₹)</label>
+                                <input type="number" id="electricityCost" name="electricityCost" class="form-control" min="0" value="0">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Other Exp (₹)</label>
+                                <input type="number" id="otherExpenses" name="otherExpenses" class="form-control" min="0" value="0">
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Farmer Remarks (Voice Supported 🎤)</label>
+                                <div class="input-group">
+                                    <input type="text" id="farmerRemarks" name="farmerRemarks" class="form-control" placeholder="Normal flock behaviour">
+                                    <button type="button" class="btn voice-mic-btn" onclick="PoultryApp.startVoiceInput(this, 'farmerRemarks')">🎤</button>
+                                </div>
+                            </div>
+
+                            <div class="col-12 d-none" id="correctionReasonBox">
+                                <label class="form-label text-danger">Authorized Correction Reason (Audit Required) *</label>
+                                <input type="text" id="correctionReason" class="form-control border-danger" placeholder="Explain why this historical record is being corrected">
+                            </div>
+                        </div>
+
+                        <div class="mt-4 d-flex gap-2">
+                            <button type="submit" class="btn-agri flex-grow-1" id="submitDailyBtn">✅ Save Today's Record</button>
+                            <button type="button" class="btn-agri-outline d-none" id="cancelCorrectionBtn" onclick="resetCorrectionMode()">Cancel Edit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right: Historical Daily Log Cards -->
+            <div class="col-lg-6">
+                <div class="agri-card p-4">
+                    <h4 class="fw-bold text-success mb-3">📜 Historical Daily Records</h4>
+                    <div id="dailyHistoryList" class="d-grid gap-3" style="max-height: 760px; overflow-y:auto;"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/i18n.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let batchesMap = {};
+        let recordsCache = [];
+        let canCorrect = false;
+        let baseOpeningBirds = 0;
+
+        function updateLiveClosingPreview() {
+            const mort = Number(document.getElementById("mortality").value || 0);
+            const culls = Number(document.getElementById("culls").value || 0);
+            const add = Number(document.getElementById("additions").value || 0);
+            const trans = Number(document.getElementById("transfersOut").value || 0);
+            const closing = baseOpeningBirds - mort - culls + add - trans;
+            document.getElementById("previewOpening").textContent = baseOpeningBirds.toLocaleString("en-IN");
+            document.getElementById("previewClosing").textContent = closing.toLocaleString("en-IN");
+        }
+
+        async function onBatchChanged() {
+            const batchId = document.getElementById("batchId").value;
+            if (!batchId) return;
+            const b = batchesMap[batchId];
+            baseOpeningBirds = b ? (b.currentLiveBirds + b.totalBirdsSold) : 0;
+
+            const res = await PoultryApp.apiFetch(`/api/daily-records?batchId=${encodeURIComponent(batchId)}`);
+            recordsCache = res.data || [];
+            if (recordsCache.length > 0) {
+                baseOpeningBirds = recordsCache[0].closingBirds;
+            } else if (b) {
+                baseOpeningBirds = b.startingBirdQuantity;
+            }
+            updateLiveClosingPreview();
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const el = document.getElementById("dailyHistoryList");
+            if (recordsCache.length === 0) {
+                el.innerHTML = `<div class="p-4 text-center text-muted bg-light rounded-3">No daily records entered yet for this batch.</div>`;
+                return;
+            }
+            el.innerHTML = recordsCache.slice(0, 25).map(r => `
+                <div class="p-3 rounded-3 border bg-light">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold text-success">📅 ${r.recordDate} (Day ${r.dayNumber})</span>
+                        <span class="badge bg-success">${r.feedType || 'FEED'}: ${r.feedConsumptionKg} kg</span>
+                    </div>
+                    <div class="small mb-2">
+                        Opening: <strong>${r.openingBirds}</strong> | Mort: <strong class="text-danger">${r.mortality}</strong> | Culls: <strong>${r.culls}</strong> ➡️ Closing: <strong class="text-success">${r.closingBirds}</strong>
+                        ${r.averageBirdWeightGrams ? ` • ⚖️ ${r.averageBirdWeightGrams}g` : ""}
+                        • 💧 ${r.waterConsumptionLiters}L
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center small text-muted">
+                        <span>${PoultryApp.escapeHtml(r.farmerRemarks || '')} ${r.correctionReason ? ' (Corrected: ' + PoultryApp.escapeHtml(r.correctionReason) + ')' : ''}</span>
+                        ${canCorrect ? `<button class="btn btn-sm btn-outline-success py-0 px-2" onclick="loadForCorrection('${r.id}')">✏️ Correct</button>` : ""}
+                    </div>
+                </div>
+            `).join("");
+        }
+
+        function loadForCorrection(id) {
+            const r = recordsCache.find(x => x.id === id);
+            if (!r) return;
+            document.getElementById("editingRecordId").value = r.id;
+            document.getElementById("recordDate").value = r.recordDate;
+            document.getElementById("recordDate").readOnly = true;
+            baseOpeningBirds = r.openingBirds;
+            document.getElementById("mortality").value = r.mortality;
+            document.getElementById("culls").value = r.culls;
+            document.getElementById("additions").value = r.additions;
+            document.getElementById("transfersOut").value = r.transfersOut;
+            document.getElementById("feedType").value = r.feedType || "STARTER";
+            document.getElementById("feedConsumptionKg").value = r.feedConsumptionKg;
+            document.getElementById("waterConsumptionLiters").value = r.waterConsumptionLiters;
+            document.getElementById("averageBirdWeightGrams").value = r.averageBirdWeightGrams || "";
+            document.getElementById("temperatureCelsius").value = r.temperatureCelsius || 28;
+            document.getElementById("humidityPct").value = r.humidityPct || 60;
+            document.getElementById("medicineGiven").value = r.medicineGiven || "";
+            document.getElementById("vaccinationGiven").value = r.vaccinationGiven || "";
+            document.getElementById("labourCost").value = r.labourCost || 0;
+            document.getElementById("electricityCost").value = r.electricityCost || 0;
+            document.getElementById("otherExpenses").value = r.otherExpenses || 0;
+            document.getElementById("farmerRemarks").value = r.farmerRemarks || "";
+            document.getElementById("correctionReasonBox").classList.remove("d-none");
+            document.getElementById("cancelCorrectionBtn").classList.remove("d-none");
+            document.getElementById("submitDailyBtn").textContent = "🛠️ Apply Authorized Correction";
+            updateLiveClosingPreview();
+        }
+
+        function resetCorrectionMode() {
+            document.getElementById("editingRecordId").value = "";
+            document.getElementById("recordDate").readOnly = false;
+            document.getElementById("recordDate").value = new Date().toISOString().split("T")[0];
+            document.getElementById("correctionReason").value = "";
+            document.getElementById("correctionReasonBox").classList.add("d-none");
+            document.getElementById("cancelCorrectionBtn").classList.add("d-none");
+            document.getElementById("submitDailyBtn").textContent = "✅ Save Today's Record";
+            onBatchChanged();
+        }
+
+        (async function init() {
+            const user = await PoultryApp.requireAuth(["SUPER_ADMIN", "FARM_ADMIN", "FARM_MANAGER", "FARMER"]);
+            if (!user) return;
+            PoultryApp.renderProtectedShell("daily");
+            canCorrect = ["SUPER_ADMIN", "FARM_ADMIN", "FARM_MANAGER"].includes(user.role);
+
+            document.getElementById("recordDate").value = new Date().toISOString().split("T")[0];
+
+            const res = await PoultryApp.apiFetch("/api/batches");
+            const activeBatches = (res.data || []).filter(b => b.status !== "COMPLETED");
+            const sel = document.getElementById("batchId");
+            sel.innerHTML = activeBatches.map(b => {
+                batchesMap[b.id] = b;
+                return `<option value="${b.id}">${PoultryApp.escapeHtml(b.batchCode)} — ${PoultryApp.escapeHtml(b.batchName)} (${b.breedName})</option>`;
+            }).join("");
+
+            const qBatch = new URLSearchParams(window.location.search).get("batchId");
+            if (qBatch && batchesMap[qBatch]) sel.value = qBatch;
+
+            PoultryApp.bindOfflineDraft("dailyEntryForm", "draft_phase2_daily_entry");
+            await onBatchChanged();
+
+            document.getElementById("dailyEntryForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const editId = document.getElementById("editingRecordId").value;
+                const wtVal = document.getElementById("averageBirdWeightGrams").value;
+                const payload = {
+                    batchId: document.getElementById("batchId").value,
+                    recordDate: document.getElementById("recordDate").value,
+                    mortality: Number(document.getElementById("mortality").value || 0),
+                    culls: Number(document.getElementById("culls").value || 0),
+                    additions: Number(document.getElementById("additions").value || 0),
+                    transfersOut: Number(document.getElementById("transfersOut").value || 0),
+                    feedType: document.getElementById("feedType").value,
+                    feedConsumptionKg: Number(document.getElementById("feedConsumptionKg").value || 0),
+                    waterConsumptionLiters: Number(document.getElementById("waterConsumptionLiters").value || 0),
+                    averageBirdWeightGrams: wtVal ? Number(wtVal) : null,
+                    temperatureCelsius: Number(document.getElementById("temperatureCelsius").value || 28),
+                    humidityPct: Number(document.getElementById("humidityPct").value || 60),
+                    medicineGiven: document.getElementById("medicineGiven").value,
+                    vaccinationGiven: document.getElementById("vaccinationGiven").value,
+                    labourCost: Number(document.getElementById("labourCost").value || 0),
+                    electricityCost: Number(document.getElementById("electricityCost").value || 0),
+                    otherExpenses: Number(document.getElementById("otherExpenses").value || 0),
+                    farmerRemarks: document.getElementById("farmerRemarks").value,
+                    correctionReason: document.getElementById("correctionReason").value || null
+                };
+                try {
+                    const apiRes = await PoultryApp.apiFetch(editId ? `/api/daily-records/${editId}` : "/api/daily-records", {
+                        method: editId ? "PUT" : "POST",
+                        body: JSON.stringify(payload)
+                    });
+                    PoultryApp.clearOfflineDraft("dailyEntryForm", "draft_phase2_daily_entry");
+                    PoultryApp.showToast(apiRes.message, "success");
+                    resetCorrectionMode();
+                } catch (err) {
+                    PoultryApp.showToast(err.message, "danger");
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
