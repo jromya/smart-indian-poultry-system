@@ -17,5 +17,5 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /build/target/smart-poultry-backend-1.0.0.jar /app/app.jar
 
 EXPOSE 8080
-ENV JAVA_OPTS="-XX:MaxRAMPercentage=75.0"
+ENV JAVA_OPTS="-XX:+UseSerialGC -Xms128m -Xmx320m -XX:MaxMetaspaceSize=120m -Xss512k"
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]
