@@ -117,6 +117,7 @@
                         <div class="d-flex flex-wrap gap-2">
                             ${!isCompleted ? `<a href="/daily-records.html?batchId=${b.id}" class="btn-agri btn-sm text-decoration-none">📝 Daily Entry</a>` : ""}
                             <a href="${opsHref}" class="btn-agri-outline btn-sm text-decoration-none">${opsLabel}</a>
+                            <a href="/reports.html?batchId=${b.id}" class="btn btn-outline-success btn-sm rounded-3 fw-semibold text-decoration-none">📄 PDF Report</a>
                             ${(!isCompleted && canWrite) ? `<button class="btn btn-outline-danger btn-sm rounded-3 fw-semibold" onclick="completeBatch('${b.id}', '${b.batchCode}')">🏁 Complete Batch</button>` : ""}
                             ${(isCompleted && canReopen) ? `<button class="btn btn-outline-warning text-dark btn-sm rounded-3 fw-semibold" onclick="reopenBatch('${b.id}', '${b.batchCode}')">🔓 Reopen Batch</button>` : ""}
                         </div>

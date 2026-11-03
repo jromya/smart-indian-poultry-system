@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,6 +35,7 @@ public class BatchService {
     private final BreedRepository breedRepository;
     private final FarmAccessGuard farmAccessGuard;
     private final AuditLogService auditLogService;
+    private Consumer<Batch> onBatchCompletedHook;
 
     public BatchService(BatchRepository batchRepository,
                         FarmRepository farmRepository,
@@ -211,6 +213,10 @@ public class BatchService {
         return BatchResponse.fromDocument(saved);
     }
 
+    public void setOnBatchCompletedHook(Consumer<Batch> onBatchCompletedHook) {
+        this.onBatchCompletedHook = onBatchCompletedHook;
+    }
+
     public BatchResponse completeBatch(String batchId, LocalDate completionDate) {
         User actor = farmAccessGuard.getCurrentUser();
         Batch batch = getBatchDocumentWithAccess(batchId);
@@ -223,6 +229,10 @@ public class BatchService {
 
         auditLogService.record(actor, batch.getFarmId(), "BATCH_COMPLETED", "BATCH", saved.getId(),
                 "Completed batch " + saved.getBatchCode() + " on " + saved.getActualCompletionDate());
+
+        if (this.onBatchCompletedHook != null) {
+            this.onBatchCompletedHook.accept(saved);
+        }
         return BatchResponse.fromDocument(saved);
     }
 

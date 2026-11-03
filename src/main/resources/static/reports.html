@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batch PDF Reports & Backup - Smart Indian Poultry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div id="appNavbarMount"></div>
+
+    <main class="container py-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <div>
+                <h2 class="fw-bold text-success mb-1">📄 <span data-i18n="nav_reports">PDF Reports & Backup</span></h2>
+                <p class="text-muted mb-0">Auto-generated & on-demand Unicode Batch Performance & Financial P&L PDF Reports in 11 Indian languages.</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <button type="button" class="btn-agri-outline" onclick="PoultryApp.speakText('audio_reports_help')">
+                    🔊 <span data-i18n="btn_listen_help">Listen Audio Guide</span>
+                </button>
+                <a href="/analytics.html" class="btn-agri-outline text-decoration-none">📈 15 Charts Hub</a>
+            </div>
+        </div>
+
+        <!-- Generate On-Demand Batch PDF Report Card -->
+        <div class="agri-card p-4 mb-4">
+            <h5 class="fw-bold text-success mb-3">🖨️ Generate New Batch Performance & Financial PDF Report</h5>
+            <form id="genReportForm" class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label fw-semibold">🐣 Select Batch (Active or Completed)</label>
+                    <select id="selBatch" class="form-select" required></select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">🌐 Report Language (11 Indian Scripts)</label>
+                    <select id="selReportLang" class="form-select"></select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn-agri w-100 py-2">⚡ Generate & Download PDF</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Saved Batch Reports History -->
+        <div class="agri-card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <h5 class="fw-bold text-success mb-0">📚 Saved Batch Reports (`batch_reports` Collection)</h5>
+                <span class="badge bg-success px-3 py-2 rounded-pill" id="reportCountBadge">0 Reports</span>
+            </div>
+            <div class="row g-3" id="reportsGrid"></div>
+        </div>
+
+        <!-- Super Admin Only: 27-Collection MongoDB Health & Full JSON Backup Export -->
+        <div id="superAdminBackupSection" class="agri-card p-4 border-success d-none">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+                <div>
+                    <h5 class="fw-bold text-success mb-1">🛡️ Super Admin: 27-Collection MongoDB Health & Full JSON Backup</h5>
+                    <p class="text-muted small mb-0">Exports all 27 collections into a timestamped JSON archive with BCrypt password hashes safely redacted.</p>
+                </div>
+                <a href="/api/admin/backup/export" class="btn-agri text-decoration-none">
+                    💾 Download Full Database Backup (.json)
+                </a>
+            </div>
+            <div class="row g-2 small" id="collectionsHealthGrid"></div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/i18n.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        let currentUser = null;
+
+        function downloadPdf(reportId, overrideLang) {
+            const lang = overrideLang || document.getElementById("selReportLang").value || getCurrentLang();
+            window.location.href = `/api/reports/${encodeURIComponent(reportId)}/pdf?lang=${encodeURIComponent(lang)}`;
+        }
+
+        async function loadReports(filterBatchId = "") {
+            const url = filterBatchId ? `/api/reports?batchId=${encodeURIComponent(filterBatchId)}` : "/api/reports";
+            const res = await PoultryApp.apiFetch(url);
+            const list = res.data || [];
+            document.getElementById("reportCountBadge").textContent = `${list.length} Report(s)`;
+            const grid = document.getElementById("reportsGrid");
+
+            if (list.length === 0) {
+                grid.innerHTML = `<div class="col-12 text-center text-muted py-4">No batch reports generated yet. Select a batch above and tap Generate & Download PDF!</div>`;
+                return;
+            }
+
+            grid.innerHTML = list.map(r => {
+                const pl = Number(r.netProfitLossInr || 0);
+                const plBadge = r.profitable
+                    ? `<span class="badge bg-success">+₹${pl.toLocaleString("en-IN")} Profit</span>`
+                    : `<span class="badge bg-danger">-₹${Math.abs(pl).toLocaleString("en-IN")} Loss</span>`;
+                const autoBadge = r.autoGeneratedOnCompletion
+                    ? `<span class="badge bg-warning text-dark ms-1">🏁 Auto on Complete</span>` : "";
+
+                return `
+                <div class="col-lg-6">
+                    <div class="p-3 rounded-4 border bg-light h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                                <span class="fw-bold text-success">${PoultryApp.escapeHtml(r.reportNumber)}</span>
+                                <div>${plBadge}${autoBadge}</div>
+                            </div>
+                            <div class="fw-semibold mb-1">
+                                🐣 ${PoultryApp.escapeHtml(r.batchCode)} — ${PoultryApp.escapeHtml(r.batchName)} (${PoultryApp.escapeHtml(r.breedName)})
+                            </div>
+                            <div class="small text-muted mb-2">
+                                🏡 ${PoultryApp.escapeHtml(r.farmName)} • 🏗️ ${PoultryApp.escapeHtml(r.poultryHouseName)} • ⏱️ ${r.totalCycleDays} days
+                            </div>
+                            <div class="row g-1 small bg-white p-2 rounded-3 border mb-3">
+                                <div class="col-6"><strong>Birds Placed / Live:</strong> ${r.startingBirds} / ${r.remainingLiveBirds}</div>
+                                <div class="col-6"><strong>Mortality / FCR:</strong> ${r.mortalityPercentage}% / ${r.calculatedFcr}</div>
+                                <div class="col-6"><strong>Total Revenue:</strong> ₹${Number(r.totalRevenueInr || 0).toLocaleString("en-IN")}</div>
+                                <div class="col-6"><strong>Consumed Cost:</strong> ₹${Number(r.totalExpensesInr || 0).toLocaleString("en-IN")}</div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <small class="text-muted">By ${PoultryApp.escapeHtml(r.generatedBy || 'system')}</small>
+                            <button type="button" class="btn-agri btn-sm px-3" onclick="downloadPdf('${r.id}')">
+                                📄 Download PDF (Selected Language)
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+            }).join("");
+        }
+
+        async function loadAdminBackupSummary() {
+            if (currentUser.role !== "SUPER_ADMIN") return;
+            document.getElementById("superAdminBackupSection").classList.remove("d-none");
+            try {
+                const res = await PoultryApp.apiFetch("/api/admin/backup/summary");
+                const d = res.data || {};
+                const cols = d.collections || {};
+                document.getElementById("collectionsHealthGrid").innerHTML = Object.entries(cols).map(([name, cnt]) => `
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="p-2 px-3 rounded-3 border bg-light d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold text-truncate me-2">${PoultryApp.escapeHtml(name)}</span>
+                            <span class="badge bg-success rounded-pill">${cnt}</span>
+                        </div>
+                    </div>
+                `).join("");
+            } catch (err) {
+                PoultryApp.showToast(err.message, "warning");
+            }
+        }
+
+        (async function init() {
+            currentUser = await PoultryApp.requireAuth(["SUPER_ADMIN", "FARM_ADMIN", "FARM_MANAGER", "FARMER"]);
+            if (!currentUser) return;
+            PoultryApp.renderProtectedShell("reports");
+
+            document.getElementById("selReportLang").innerHTML = PoultryApp.buildLanguageOptionsHtml();
+
+            const batchesRes = await PoultryApp.apiFetch("/api/batches");
+            const batches = batchesRes.data || [];
+            const batchSel = document.getElementById("selBatch");
+            const urlBatchId = new URLSearchParams(window.location.search).get("batchId") || "";
+
+            if (batches.length === 0) {
+                batchSel.innerHTML = `<option value="">No batches available</option>`;
+            } else {
+                batchSel.innerHTML = batches.map(b =>
+                    `<option value="${b.id}" ${b.id === urlBatchId ? 'selected' : ''}>${PoultryApp.escapeHtml(b.batchCode)} — ${PoultryApp.escapeHtml(b.batchName)} (${PoultryApp.escapeHtml(b.status)})</option>`
+                ).join("");
+            }
+
+            document.getElementById("genReportForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const bId = batchSel.value;
+                const lang = document.getElementById("selReportLang").value;
+                if (!bId) return;
+                try {
+                    const res = await PoultryApp.apiFetch(`/api/reports/generate?batchId=${encodeURIComponent(bId)}&lang=${encodeURIComponent(lang)}`, {
+                        method: "POST"
+                    });
+                    PoultryApp.showToast(res.message, "success");
+                    await loadReports();
+                    if (res.data && res.data.id) {
+                        downloadPdf(res.data.id, lang);
+                    }
+                } catch (err) {
+                    PoultryApp.showToast(err.message, "danger");
+                }
+            });
+
+            await loadReports(urlBatchId);
+            await loadAdminBackupSummary();
+        })();
+    </script>
+</body>
+</html>

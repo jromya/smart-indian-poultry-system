@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>15-Chart Analytics Hub - Smart Indian Poultry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div id="appNavbarMount"></div>
+
+    <main class="container-fluid px-3 px-lg-4 py-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <div>
+                <h2 class="fw-bold text-success mb-1">📈 <span data-i18n="nav_analytics">Analytics (15 Charts)</span></h2>
+                <p class="text-muted mb-0">Live visual intelligence across flock health, growth, FCR, eggs, cutting shop yield, inventory & accrual P&L.</p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <button type="button" class="btn-agri-outline" onclick="PoultryApp.speakText('audio_analytics_help')">
+                    🔊 <span data-i18n="btn_listen_help">Listen Audio Guide</span>
+                </button>
+                <a href="/reports.html" class="btn-agri text-decoration-none" id="btnGoReports">
+                    📄 <span data-i18n="nav_reports">PDF Reports & Backup</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Deep Filtering Bar -->
+        <div class="agri-card p-3 mb-4">
+            <div class="row g-2 align-items-end">
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-bold mb-1">🏡 Farm</label>
+                    <select id="fltFarm" class="form-select form-select-sm" onchange="reloadCharts()">
+                        <option value="">All Accessible Farms</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-bold mb-1">🐣 Batch</label>
+                    <select id="fltBatch" class="form-select form-select-sm" onchange="reloadCharts()">
+                        <option value="">All Batches</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-bold mb-1">🐔 Breed</label>
+                    <select id="fltBreed" class="form-select form-select-sm" onchange="reloadCharts()">
+                        <option value="">All 16+ Breeds</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small fw-bold mb-1">📋 Category</label>
+                    <select id="fltCategory" class="form-select form-select-sm" onchange="reloadCharts()">
+                        <option value="">All Categories</option>
+                        <option value="BROILER">Broiler</option>
+                        <option value="LAYER">Egg Layer</option>
+                        <option value="INDIGENOUS">Indigenous / Desi</option>
+                    </select>
+                </div>
+                <div class="col-4 col-md-1">
+                    <label class="form-label small fw-bold mb-1">🏢 Context</label>
+                    <select id="fltBiz" class="form-select form-select-sm" onchange="reloadCharts()">
+                        <option value="ALL">All</option>
+                        <option value="FARM">Farm</option>
+                        <option value="RETAIL">Retail</option>
+                        <option value="CHICKEN_SHOP">Shop</option>
+                    </select>
+                </div>
+                <div class="col-4 col-md-1">
+                    <label class="form-label small fw-bold mb-1">📅 From</label>
+                    <input type="date" id="fltFrom" class="form-control form-control-sm" onchange="reloadCharts()">
+                </div>
+                <div class="col-4 col-md-1">
+                    <label class="form-label small fw-bold mb-1">📅 To</label>
+                    <input type="date" id="fltTo" class="form-control form-control-sm" onchange="reloadCharts()">
+                </div>
+                <div class="col-12 col-md-1">
+                    <button type="button" class="btn btn-sm btn-outline-secondary w-100 fw-semibold" onclick="resetFilters()">↺ Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Summary Strip -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-lg-2">
+                <div class="agri-card p-3 text-center h-100">
+                    <div class="small text-muted fw-semibold">Batches Analyzed</div>
+                    <div class="fs-4 fw-bold text-success" id="kpiBatches">0</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-2">
+                <div class="agri-card p-3 text-center h-100">
+                    <div class="small text-muted fw-semibold">Current Live Birds</div>
+                    <div class="fs-4 fw-bold text-success" id="kpiLiveBirds">0</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-2">
+                <div class="agri-card p-3 text-center h-100">
+                    <div class="small text-muted fw-semibold">Good Eggs Collected</div>
+                    <div class="fs-4 fw-bold text-primary" id="kpiEggs">0</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-2">
+                <div class="agri-card p-3 text-center h-100">
+                    <div class="small text-muted fw-semibold">Total Revenue</div>
+                    <div class="fs-5 fw-bold text-success" id="kpiRev">₹0</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-2">
+                <div class="agri-card p-3 text-center h-100">
+                    <div class="small text-muted fw-semibold">Consumed Expenses</div>
+                    <div class="fs-5 fw-bold text-danger" id="kpiExp">₹0</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-2">
+                <div class="agri-card p-3 text-center h-100">
+                    <div class="small text-muted fw-semibold">Net Profit / Loss</div>
+                    <div class="fs-5 fw-bold" id="kpiNetPl">₹0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- All 15 Interactive Chart.js Cards -->
+        <div class="row g-4">
+            <div class="col-lg-6"><div class="agri-card p-3 h-100"><h6 class="fw-bold text-success">1. 🐔 Total Birds (Live vs Sold vs Mortality)</h6><canvas id="ch1TotalBirds" height="190"></canvas></div></div>
+            <div class="col-lg-6"><div class="agri-card p-3 h-100"><h6 class="fw-bold text-danger">2. ⚠️ Daily Mortality & Culls Trend</h6><canvas id="ch2DailyMortality" height="190"></canvas></div></div>
+
+            <div class="col-lg-6"><div class="agri-card p-3 h-100"><h6 class="fw-bold text-success">3. 📈 Daily Bird Growth Gain (ADG g/day)</h6><canvas id="ch3DailyGrowth" height="190"></canvas></div></div>
+            <div class="col-lg-6"><div class="agri-card p-3 h-100"><h6 class="fw-bold text-primary">4. ⚖️ Average Bird Weight vs Breed Standard (g)</h6><canvas id="ch4AvgWeight" height="190"></canvas></div></div>
+
+            <div class="col-lg-6"><div class="agri-card p-3 h-100"><h6 class="fw-bold text-warning">5. 🌾 Daily Feed Consumption (kg)</h6><canvas id="ch5FeedConsumption" height="190"></canvas></div></div>
+            <div class="col-lg-6"><div class="agri-card p-3 h-100"><h6 class="fw-bold text-success">6. 🎯 Feed Conversion Ratio (Actual FCR vs Breed Target)</h6><canvas id="ch6Fcr" height="190"></canvas></div></div>
+
+            <div class="col-lg-6"><div class="agri-card p-3 h-100"><h6 class="fw-bold text-info">7. 💧 Daily Water Consumption (Liters)</h6><canvas id="ch7Water" height="190"></canvas></div></div>
+            <div class="col-lg-6"><div class="agri-card p-3 h-100"><h6 class="fw-bold text-success">8. 🥚 Egg Production & Hen-Day %</h6><canvas id="ch8EggProd" height="190"></canvas></div></div>
+
+            <div class="col-lg-6"><div class="agri-card p-3 h-100"><h6 class="fw-bold text-success">9. 🚛 Live Chicken Sales Revenue (₹)</h6><canvas id="ch9ChickenSales" height="190"></canvas></div></div>
+            <div class="col-lg-6"><div class="agri-card p-3 h-100"><h6 class="fw-bold text-danger">10. 🔪 Dressed Meat Production & Shop Sales</h6><canvas id="ch10MeatSales" height="190"></canvas></div></div>
+
+            <div class="col-lg-6"><div class="agri-card p-3 h-100"><h6 class="fw-bold text-primary">11. 💰 Income vs Consumed Expenses Breakdown (₹)</h6><canvas id="ch11IncVsExp" height="190"></canvas></div></div>
+            <div class="col-lg-6"><div class="agri-card p-3 h-100"><h6 class="fw-bold text-success">12. 📊 Monthly Revenue, Expenses & Net Profit/Loss (₹)</h6><canvas id="ch12ProfitLoss" height="190"></canvas></div></div>
+
+            <div class="col-lg-6"><div class="agri-card p-3 h-100"><h6 class="fw-bold text-secondary">13. 📦 Godown Inventory Valuation by Category (₹)</h6><canvas id="ch13Inventory" height="190"></canvas></div></div>
+            <div class="col-lg-6"><div class="agri-card p-3 h-100"><h6 class="fw-bold text-success">14. 🏡 Farm & Business Unit Performance Comparison</h6><canvas id="ch14FarmPerf" height="190"></canvas></div></div>
+
+            <div class="col-12"><div class="agri-card p-3"><h6 class="fw-bold text-success">15. 🐣 Multi-Batch Comparison (Mortality %, Avg Weight kg & Revenue ₹k)</h6><canvas id="ch15BatchComp" height="120"></canvas></div></div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="/js/i18n.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        const chartInstances = {};
+        let filtersPopulated = false;
+
+        function upsertChart(canvasId, config) {
+            if (chartInstances[canvasId]) {
+                chartInstances[canvasId].destroy();
+            }
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+            chartInstances[canvasId] = new Chart(ctx, config);
+        }
+
+        function safeLabels(arr, emptyLabel = "No Data in Filter") {
+            return (arr && arr.length > 0) ? arr : [emptyLabel];
+        }
+        function safeData(arr) {
+            return (arr && arr.length > 0) ? arr : [0];
+        }
+
+        function resetFilters() {
+            ["fltFarm", "fltBatch", "fltBreed", "fltCategory", "fltFrom", "fltTo"].forEach(id => {
+                document.getElementById(id).value = "";
+            });
+            document.getElementById("fltBiz").value = "ALL";
+            reloadCharts();
+        }
+
+        async function reloadCharts() {
+            try {
+                const params = new URLSearchParams();
+                const map = {
+                    farmId: "fltFarm",
+                    batchId: "fltBatch",
+                    breedId: "fltBreed",
+                    batchCategory: "fltCategory",
+                    businessType: "fltBiz",
+                    fromDate: "fltFrom",
+                    toDate: "fltTo"
+                };
+                Object.entries(map).forEach(([param, elId]) => {
+                    const v = document.getElementById(elId).value;
+                    if (v) params.set(param, v);
+                });
+
+                const res = await PoultryApp.apiFetch("/api/analytics/charts?" + params.toString());
+                const payload = res.data || {};
+                const k = payload.kpis || {};
+                const c = payload.charts || {};
+
+                if (!filtersPopulated && payload.filtersMeta) {
+                    const fm = payload.filtersMeta;
+                    const farmSel = document.getElementById("fltFarm");
+                    (fm.farms || []).forEach(f => farmSel.insertAdjacentHTML("beforeend", `<option value="${f.id}">${PoultryApp.escapeHtml(f.name)}</option>`));
+                    const batchSel = document.getElementById("fltBatch");
+                    (fm.batches || []).forEach(b => batchSel.insertAdjacentHTML("beforeend", `<option value="${b.id}">${PoultryApp.escapeHtml(b.code)} - ${PoultryApp.escapeHtml(b.name)}</option>`));
+                    const breedSel = document.getElementById("fltBreed");
+                    (fm.breeds || []).forEach(br => breedSel.insertAdjacentHTML("beforeend", `<option value="${br.id}">${PoultryApp.escapeHtml(br.name)}</option>`));
+                    filtersPopulated = true;
+                }
+
+                document.getElementById("kpiBatches").textContent = k.totalBatchesAnalyzed || 0;
+                document.getElementById("kpiLiveBirds").textContent = Number(k.totalLiveBirds || 0).toLocaleString("en-IN");
+                document.getElementById("kpiEggs").textContent = Number(k.totalGoodEggsCollected || 0).toLocaleString("en-IN");
+                document.getElementById("kpiRev").textContent = "₹" + Number(k.totalRevenueInr || 0).toLocaleString("en-IN");
+                document.getElementById("kpiExp").textContent = "₹" + Number(k.totalExpensesInr || 0).toLocaleString("en-IN");
+
+                const net = Number(k.netProfitLossInr || 0);
+                const netEl = document.getElementById("kpiNetPl");
+                netEl.textContent = (net >= 0 ? "+₹" : "-₹") + Math.abs(net).toLocaleString("en-IN");
+                netEl.className = "fs-5 fw-bold " + (net >= 0 ? "text-success" : "text-danger");
+
+                // 1. Total Birds
+                const c1 = c.totalBirdsChart || {};
+                upsertChart("ch1TotalBirds", {
+                    type: "bar",
+                    data: {
+                        labels: safeLabels(c1.labels),
+                        datasets: [
+                            { label: "Live Birds", data: safeData(c1.liveBirds), backgroundColor: "#2e7d32" },
+                            { label: "Sold Birds", data: safeData(c1.soldBirds), backgroundColor: "#1565c0" },
+                            { label: "Mortality & Culls", data: safeData(c1.mortalityAndCulls), backgroundColor: "#c62828" }
+                        ]
+                    }
+                });
+
+                // 2. Daily Mortality
+                const c2 = c.dailyMortalityChart || {};
+                upsertChart("ch2DailyMortality", {
+                    type: "line",
+                    data: {
+                        labels: safeLabels(c2.labels),
+                        datasets: [
+                            { label: "Daily Mortality", data: safeData(c2.mortality), borderColor: "#c62828", backgroundColor: "rgba(198,40,40,0.15)", fill: true, tension: 0.3 },
+                            { label: "Daily Culls", data: safeData(c2.culls), borderColor: "#ef6c00", tension: 0.3 }
+                        ]
+                    }
+                });
+
+                // 3. Daily Growth
+                const c3 = c.dailyGrowthChart || {};
+                upsertChart("ch3DailyGrowth", {
+                    type: "bar",
+                    data: {
+                        labels: safeLabels(c3.labels),
+                        datasets: [{ label: "Average Daily Gain (g/day)", data: safeData(c3.dailyGainGrams), backgroundColor: "#43a047" }]
+                    }
+                });
+
+                // 4. Average Bird Weight
+                const c4 = c.averageWeightChart || {};
+                upsertChart("ch4AvgWeight", {
+                    type: "line",
+                    data: {
+                        labels: safeLabels(c4.labels),
+                        datasets: [
+                            { label: "Actual Bird Weight (g)", data: safeData(c4.actualWeightGrams), borderColor: "#1565c0", backgroundColor: "rgba(21,101,192,0.12)", fill: true, tension: 0.3 },
+                            { label: "Breed Expected Standard (g)", data: safeData(c4.expectedBreedWeightGrams), borderColor: "#8e24aa", borderDash: [6, 4], tension: 0.3 }
+                        ]
+                    }
+                });
+
+                // 5. Feed Consumption
+                const c5 = c.feedConsumptionChart || {};
+                upsertChart("ch5FeedConsumption", {
+                    type: "bar",
+                    data: {
+                        labels: safeLabels(c5.labels),
+                        datasets: [{ label: "Daily Feed Issued (kg)", data: safeData(c5.dailyFeedKg), backgroundColor: "#f9a825" }]
+                    }
+                });
+
+                // 6. FCR
+                const c6 = c.fcrChart || {};
+                upsertChart("ch6Fcr", {
+                    type: "bar",
+                    data: {
+                        labels: safeLabels(c6.labels),
+                        datasets: [
+                            { label: "Calculated Actual FCR", data: safeData(c6.actualFcr), backgroundColor: "#2e7d32" },
+                            { label: "Breed Target FCR", data: safeData(c6.targetFcr), backgroundColor: "#90a4ae" }
+                        ]
+                    }
+                });
+
+                // 7. Water Consumption
+                const c7 = c.waterConsumptionChart || {};
+                upsertChart("ch7Water", {
+                    type: "line",
+                    data: {
+                        labels: safeLabels(c7.labels),
+                        datasets: [{ label: "Water Consumed (Liters)", data: safeData(c7.liters), borderColor: "#0288d1", backgroundColor: "rgba(2,136,209,0.15)", fill: true, tension: 0.3 }]
+                    }
+                });
+
+                // 8. Egg Production
+                const c8 = c.eggProductionChart || {};
+                upsertChart("ch8EggProd", {
+                    type: "bar",
+                    data: {
+                        labels: safeLabels(c8.labels),
+                        datasets: [
+                            { label: "Good Eggs", data: safeData(c8.goodEggs), backgroundColor: "#2e7d32" },
+                            { label: "Damaged / Broken / Dirty", data: safeData(c8.damagedBrokenDirtyEggs), backgroundColor: "#e53935" },
+                            { label: "Hen-Day %", data: safeData(c8.henDayPct), type: "line", borderColor: "#1565c0", tension: 0.3 }
+                        ]
+                    }
+                });
+
+                // 9. Chicken Sales
+                const c9 = c.chickenSalesChart || {};
+                upsertChart("ch9ChickenSales", {
+                    type: "bar",
+                    data: {
+                        labels: safeLabels(c9.labels),
+                        datasets: [{ label: "Live Chicken Sales (₹)", data: safeData(c9.chickenSalesInr), backgroundColor: "#2e7d32" }]
+                    }
+                });
+
+                // 10. Meat Sales
+                const c10 = c.meatSalesChart || {};
+                upsertChart("ch10MeatSales", {
+                    type: "bar",
+                    data: {
+                        labels: safeLabels(c10.labels),
+                        datasets: [
+                            { label: "Dressed Meat Revenue (₹)", data: safeData(c10.meatRevenueInr), backgroundColor: "#ad1457" },
+                            { label: "Actual Dressed Meat (kg)", data: safeData(c10.actualDressedMeatKg), backgroundColor: "#ffb300" }
+                        ]
+                    }
+                });
+
+                // 11. Income vs Expenses
+                const c11 = c.incomeVsExpensesChart || {};
+                upsertChart("ch11IncVsExp", {
+                    type: "bar",
+                    data: {
+                        labels: safeLabels(c11.labels),
+                        datasets: [{
+                            label: "Amount (₹)",
+                            data: safeData(c11.valuesInr),
+                            backgroundColor: ["#2e7d32", "#43a047", "#66bb6a", "#81c784", "#c62828", "#e53935", "#ef5350", "#ff7043"]
+                        }]
+                    }
+                });
+
+                // 12. Profit / Loss
+                const c12 = c.profitLossChart || {};
+                upsertChart("ch12ProfitLoss", {
+                    type: "bar",
+                    data: {
+                        labels: safeLabels(c12.labels),
+                        datasets: [
+                            { label: "Revenue (₹)", data: safeData(c12.revenueInr), backgroundColor: "#2e7d32" },
+                            { label: "Consumed Expenses (₹)", data: safeData(c12.expensesInr), backgroundColor: "#e53935" },
+                            { label: "Net Profit / Loss (₹)", data: safeData(c12.netProfitLossInr), type: "line", borderColor: "#1565c0", borderWidth: 3 }
+                        ]
+                    }
+                });
+
+                // 13. Inventory Valuation
+                const c13 = c.inventoryChart || {};
+                upsertChart("ch13Inventory", {
+                    type: "doughnut",
+                    data: {
+                        labels: safeLabels(c13.labels),
+                        datasets: [{
+                            label: "Valuation (₹)",
+                            data: safeData(c13.valuationInr),
+                            backgroundColor: ["#2e7d32", "#1565c0", "#ef6c00", "#6a1b9a", "#00838f", "#5d4037"]
+                        }]
+                    }
+                });
+
+                // 14. Farm-Wise Performance
+                const c14 = c.farmWisePerformanceChart || {};
+                upsertChart("ch14FarmPerf", {
+                    type: "bar",
+                    data: {
+                        labels: safeLabels(c14.labels),
+                        datasets: [
+                            { label: "Total Revenue (₹)", data: safeData(c14.revenueInr), backgroundColor: "#2e7d32" },
+                            { label: "Net Profit / Loss (₹)", data: safeData(c14.netProfitInr), backgroundColor: "#1565c0" }
+                        ]
+                    }
+                });
+
+                // 15. Batch Comparison
+                const c15 = c.batchComparisonChart || {};
+                upsertChart("ch15BatchComp", {
+                    type: "bar",
+                    data: {
+                        labels: safeLabels(c15.labels),
+                        datasets: [
+                            { label: "Mortality (%)", data: safeData(c15.mortalityPct), backgroundColor: "#e53935" },
+                            { label: "Avg Bird Weight (kg)", data: safeData(c15.averageWeightKg), backgroundColor: "#1e88e5" },
+                            { label: "Direct Batch Revenue (₹ in Thousands)", data: safeData(c15.revenueThousandsInr), backgroundColor: "#2e7d32" }
+                        ]
+                    }
+                });
+            } catch (err) {
+                PoultryApp.showToast(err.message, "danger");
+            }
+        }
+
+        (async function init() {
+            const user = await PoultryApp.requireAuth();
+            if (!user) return;
+            PoultryApp.renderProtectedShell("analytics");
+            if (!["SUPER_ADMIN", "FARM_ADMIN", "FARM_MANAGER", "FARMER"].includes(user.role)) {
+                document.getElementById("btnGoReports").classList.add("d-none");
+            }
+            await reloadCharts();
+        })();
+    </script>
+</body>
+</html>

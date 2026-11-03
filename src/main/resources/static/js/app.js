@@ -183,6 +183,15 @@ const PoultryApp = {
                                 <li><a class="dropdown-item py-2 fw-semibold" href="/chicken-shop.html">🔪 <span data-i18n="nav_chicken_shop">Chicken Cutting Shop</span></a></li>` : ""}
                             </ul>
                         </li>` : ""}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-white fw-semibold ${['analytics','reports'].includes(activePage) ? 'bg-white bg-opacity-25 rounded-3 px-3' : 'px-2'}" href="#" role="button" data-bs-toggle="dropdown">
+                                📉 Insights & PDF
+                            </a>
+                            <ul class="dropdown-menu rounded-3 shadow">
+                                <li><a class="dropdown-item py-2 fw-semibold" href="/analytics.html">📈 <span data-i18n="nav_analytics">Analytics (15 Charts)</span></a></li>
+                                ${isFarmRole ? `<li><a class="dropdown-item py-2 fw-semibold" href="/reports.html">📄 <span data-i18n="nav_reports">PDF Reports & Backup</span></a></li>` : ""}
+                            </ul>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link text-white fw-semibold ${activePage === 'breeds' ? 'bg-white bg-opacity-25 rounded-3 px-3' : 'px-2'}" href="/breeds.html">
                                 🐔 <span data-i18n="nav_breeds">Indian Breeds</span>

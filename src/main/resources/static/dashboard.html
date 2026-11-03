@@ -139,6 +139,10 @@
                 actions.push({ href: "/customers.html", icon: "🤝", key: "nav_customers", label: t("nav_customers") });
                 actions.push({ href: "/expenses.html", icon: "📉", key: "nav_expenses", label: t("nav_expenses") });
             }
+            actions.push({ href: "/analytics.html", icon: "📈", key: "nav_analytics", label: t("nav_analytics") });
+            if (["SUPER_ADMIN", "FARM_ADMIN", "FARM_MANAGER", "FARMER"].includes(user.role)) {
+                actions.push({ href: "/reports.html", icon: "📄", key: "nav_reports", label: t("nav_reports") });
+            }
             actions.push({ href: "/breeds.html", icon: "🐔", key: "nav_breeds", label: t("nav_breeds") });
             if (["SUPER_ADMIN", "FARM_ADMIN"].includes(user.role)) {
                 actions.push({ href: "/users.html", icon: "👥", key: "nav_users", label: t("nav_users") });

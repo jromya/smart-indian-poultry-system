@@ -18,6 +18,8 @@ Designed specifically for **Indian poultry farmers, indigenous (Desi) breeders, 
 - **🏠 Live Home Page**: https://smart-indian-poultry-system.onrender.com/
 - **🔐 Live Login Screen**: https://smart-indian-poultry-system.onrender.com/login.html
 - **📝 New Registration**: https://smart-indian-poultry-system.onrender.com/register.html
+- **📈 15-Chart Analytics Hub**: https://smart-indian-poultry-system.onrender.com/analytics.html
+- **📄 Unicode PDF Reports & Backup**: https://smart-indian-poultry-system.onrender.com/reports.html
 - **📖 Swagger API Explorer**: https://smart-indian-poultry-system.onrender.com/swagger-ui.html
 - **💚 Health Check API**: https://smart-indian-poultry-system.onrender.com/api/health
 
@@ -41,8 +43,8 @@ Designed specifically for **Indian poultry farmers, indigenous (Desi) breeders, 
 - **✅ Phase 2 (Completed & Live)**: Batch Lifecycle Management, Daily Poultry Entry, Broiler FCR/Growth Engine, Layer Hen-Day Egg Engine.
 - **✅ Phase 3 (Completed & Live)**: Feed, Medicine, Configurable Vaccination Schedules, Suppliers & Automatic Inventory Reduction.
 - **✅ Phase 4 (Completed & Live)**: Wholesale, Retail, Chicken Cutting Shop (actual dressed meat yield & by-products), Sales, Purchases, Udhaar Ledgers & P&L Finance.
-- **⏳ Phase 5 (Next)**: 15 Interactive Chart.js Analytics & Deep Filtering across all 31 pages.
-- **⏳ Phase 6**: Automatic Batch Completion Unicode PDF Report (`OpenPDF`), Security Hardening, MongoDB Backup Utility.
+- **✅ Phase 5 (Completed & Live)**: 15 Interactive Chart.js Analytics (`analytics.html`), Multi-Criteria Deep Filtering & Complete 11-Indian-Language Dictionary (`en`, `mr`, `hi`, `gu`, `pa`, `bn`, `te`, `kn`, `ta`, `ml`, `or`).
+- **✅ Phase 6 (Completed & Live)**: Automatic & On-Demand Batch Completion Unicode PDF Reports (`OpenPDF` + Indian scripts in `reports.html`), 27/27 MongoDB Collections (`batch_reports`), & Super Admin Redacted JSON Database Backup (`/api/admin/backup/export`).
 
 ---
 
