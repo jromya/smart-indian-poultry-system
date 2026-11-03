@@ -1,4 +1,11 @@
-# Smart Indian Poultry Farm & Chicken Business Management System
+# 🐓 Smart Indian Poultry Farm & Chicken Business Management System
+
+[![Open Live Application](https://img.shields.io/badge/%F0%9F%8C%90_OPEN_LIVE_WEB_APP-Click_Here_to_Launch-198754?style=for-the-badge)](https://smart-indian-poultry-system.onrender.com/)
+[![Login Portal](https://img.shields.io/badge/%F0%9F%94%90_Login_Portal-Open-0d6efd?style=for-the-badge)](https://smart-indian-poultry-system.onrender.com/login.html)
+[![Swagger API](https://img.shields.io/badge/%F0%9F%93%96_Swagger_API_Docs-Open-fd7e14?style=for-the-badge)](https://smart-indian-poultry-system.onrender.com/swagger-ui.html)
+
+> ### 🚀 **Click Here to Open Live Project:** [https://smart-indian-poultry-system.onrender.com/](https://smart-indian-poultry-system.onrender.com/)
+> *(Hosted on Render Free Tier + MongoDB Atlas Cloud. Note: If nobody opened the site in the last 15 minutes, the first click takes ~30–50 seconds for the Java server to wake up.)*
 
 A complete, farmer-friendly, multilingual web application built with **Java 21 (LTS)**, **Spring Boot 3.3.4**, **Spring Security (BCrypt)**, **Spring Data MongoDB**, **Bootstrap 5**, **Chart.js**, **Web Speech API**, and **OpenPDF**.
 
@@ -6,10 +13,22 @@ Designed specifically for **Indian poultry farmers, indigenous (Desi) breeders, 
 
 ---
 
+## 🌐 Live Cloud Links (Open Directly in Browser)
+
+- **🏠 Live Home Page**: https://smart-indian-poultry-system.onrender.com/
+- **🔐 Live Login Screen**: https://smart-indian-poultry-system.onrender.com/login.html
+- **📝 New Registration**: https://smart-indian-poultry-system.onrender.com/register.html
+- **📖 Swagger API Explorer**: https://smart-indian-poultry-system.onrender.com/swagger-ui.html
+- **💚 Health Check API**: https://smart-indian-poultry-system.onrender.com/api/health
+
+*(Why doesn't GitHub Pages open this directly? GitHub only stores source code files — because this project uses a real **Java 21 Spring Boot backend + MongoDB Atlas database**, the live running website is hosted at the Render link above!)*
+
+---
+
 ## 🗺️ Phased Development Roadmap
 
-- **✅ Phase 1 (Completed & Active)**:
-  - Spring Boot 3.3.4 + MongoDB setup (`smart_indian_poultry_db`)
+- **✅ Phase 1 (Completed & Live)**:
+  - Spring Boot 3.3.4 + MongoDB Atlas setup (`smart_indian_poultry_db`)
   - BCrypt Authentication + Stateful Session & HTTP Basic REST Security
   - 6 Role-Based Access Levels (`SUPER_ADMIN`, `FARM_ADMIN`, `FARM_MANAGER`, `FARMER`, `RETAILER`, `CHICKEN_SHOP_OWNER`)
   - Strict **Farm-Level Data Isolation** (`FarmAccessGuard`) + Security `audit_logs`
@@ -19,11 +38,11 @@ Designed specifically for **Indian poultry farmers, indigenous (Desi) breeders, 
     - **Improved Rural (4)**: *Vanaraja, Gramapriya, Giriraja, Srinidhi*
     - **Commercial (4)**: *Ross 308, Cobb 500, Hubbard, BV-300 Layer*
   - Farmer-friendly mobile-first UI in **11 Indian Languages** (*English, Marathi, Hindi, Gujarati, Punjabi, Bengali, Telugu, Kannada, Tamil, Malayalam, Odia*) with **Voice Input (🎤)**, **Audio Readout (🔊)**, and **Offline Draft Saving (`localStorage`)**.
-- **⏳ Phase 2 (Next)**: Batch Lifecycle Management, Daily Poultry Entry, Broiler FCR/Growth Engine, Layer Hen-Day Egg Engine.
-- **⏳ Phase 3**: Feed, Medicine, Configurable Vaccination Schedules, Suppliers & Automatic Inventory Reduction.
-- **⏳ Phase 4**: Wholesale, Retail, Chicken Cutting Shop (actual dressed meat yield & by-products), Sales, Purchases & P&L Finance.
-- **⏳ Phase 5**: 15 Interactive Chart.js Analytics & Deep Filtering across all 31 pages.
-- **⏳ Phase 6**: Automatic Batch Completion Unicode PDF Report (`OpenPDF`), Security Hardening, MongoDB Backup Utility & Deployment.
+- **✅ Phase 2 (Completed & Live)**: Batch Lifecycle Management, Daily Poultry Entry, Broiler FCR/Growth Engine, Layer Hen-Day Egg Engine.
+- **✅ Phase 3 (Completed & Live)**: Feed, Medicine, Configurable Vaccination Schedules, Suppliers & Automatic Inventory Reduction.
+- **✅ Phase 4 (Completed & Live)**: Wholesale, Retail, Chicken Cutting Shop (actual dressed meat yield & by-products), Sales, Purchases, Udhaar Ledgers & P&L Finance.
+- **⏳ Phase 5 (Next)**: 15 Interactive Chart.js Analytics & Deep Filtering across all 31 pages.
+- **⏳ Phase 6**: Automatic Batch Completion Unicode PDF Report (`OpenPDF`), Security Hardening, MongoDB Backup Utility.
 
 ---
 
